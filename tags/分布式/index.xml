@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>分布式 on Tao Gao | 高涛</title>
+    <link>http://joegaotao.github.io/tags/%E5%88%86%E5%B8%83%E5%BC%8F/</link>
+    <description>Recent content in 分布式 on Tao Gao | 高涛</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Tue, 11 Feb 2014 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="http://joegaotao.github.io/tags/%E5%88%86%E5%B8%83%E5%BC%8F/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>分布式计算、统计学习与ADMM算法</title>
+      <link>http://joegaotao.github.io/2014/02/11/%E5%88%86%E5%B8%83%E5%BC%8F%E8%AE%A1%E7%AE%97%E7%BB%9F%E8%AE%A1%E5%AD%A6%E4%B9%A0%E4%B8%8Eadmm%E7%AE%97%E6%B3%95/</link>
+      <pubDate>Tue, 11 Feb 2014 00:00:00 +0000</pubDate>
+      
+      <guid>http://joegaotao.github.io/2014/02/11/%E5%88%86%E5%B8%83%E5%BC%8F%E8%AE%A1%E7%AE%97%E7%BB%9F%E8%AE%A1%E5%AD%A6%E4%B9%A0%E4%B8%8Eadmm%E7%AE%97%E6%B3%95/</guid>
+      <description>在整理旧电脑时，才发现13年下半年电脑里有不少残文。老师说，东西搁下了再拿起来花费的时间和之前可能差不多。我一眼看过去这篇关于分布式计算的文</description>
+    </item>
+    
+  </channel>
+</rss>

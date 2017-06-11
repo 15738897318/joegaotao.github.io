@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>生活 on Tao Gao | 高涛</title>
+    <link>http://joegaotao.github.io/categories/%E7%94%9F%E6%B4%BB/</link>
+    <description>Recent content in 生活 on Tao Gao | 高涛</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 11 Jun 2017 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="http://joegaotao.github.io/categories/%E7%94%9F%E6%B4%BB/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>博客除草</title>
+      <link>http://joegaotao.github.io/2017/06/11/blog-start/</link>
+      <pubDate>Sun, 11 Jun 2017 00:00:00 +0000</pubDate>
+      
+      <guid>http://joegaotao.github.io/2017/06/11/blog-start/</guid>
+      <description>话说三年后又突然给想起博客除草，还是因为这两天不小心溜进了谢老大博客找乐子时，想起他很久就推过的blogdown包，看着如此简单，于是乎啥也</description>
+    </item>
+    
+  </channel>
+</rss>

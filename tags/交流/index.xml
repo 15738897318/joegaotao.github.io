@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>交流 on Tao Gao | 高涛</title>
+    <link>/tags/%E4%BA%A4%E6%B5%81/</link>
+    <description>Recent content in 交流 on Tao Gao | 高涛</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 11 Jun 2017 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="/tags/%E4%BA%A4%E6%B5%81/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>给博客除点草</title>
+      <link>/2017/06/11/%E7%BB%99%E5%8D%9A%E5%AE%A2%E9%99%A4%E7%82%B9%E8%8D%89/</link>
+      <pubDate>Sun, 11 Jun 2017 00:00:00 +0000</pubDate>
+      
+      <guid>/2017/06/11/%E7%BB%99%E5%8D%9A%E5%AE%A2%E9%99%A4%E7%82%B9%E8%8D%89/</guid>
+      <description>话说三年后又突然给想起博客除草，还是因为这两天不小心溜进了谢老大博客找乐子时，想起他很久就推过的blogdown包，看着如此简单，于是乎啥也</description>
+    </item>
+    
+  </channel>
+</rss>

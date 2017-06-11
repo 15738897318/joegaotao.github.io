@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.21" />
+
+
+<title>高维变量选择问题的一点总结 - Tao Gao | 高涛</title>
+<meta property="og:title" content="高维变量选择问题的一点总结 - Tao Gao | 高涛">
+
+
+
+  
+
+
+
+
+
+
+
+<link rel="stylesheet" href="../../../../css/fonts.css" media="all">
+<link rel="stylesheet" href="../../../../css/main.css" media="all">
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="../../../../" class="nav-logo">
+    <img src="../../../../images/logo.png"
+         width="50"
+         height="50"
+         alt="Logo">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="../../../../about/">关于</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+    
+    <span class="article-duration">2 min read</span>
+    
+
+    <h1 class="article-title">高维变量选择问题的一点总结</h1>
+
+    
+    <span class="article-date">2013/07/05</span>
+    
+
+    <div class="article-content">
+      <p>近十年来，不管是统计界还是计算机界，高维数据问题依然是最热的话题。大数据时代带来的不仅仅是海量的数据，更多的是数据的复杂性和维度的多样性。对于一个个体的描述，我们不再仅仅是通过几个体征属性来描述，并试图通过一些方法来对个体做推断。伴随着互联网用户行为数据的收集、个体生理指标的测量，纵向数据、函数型数据、Tensor型数据大量涌现，描述个体的角度变得丰富多彩起来，我们总希望从这些复杂的关系中拨开云雾，发现数据间千丝万缕的关系，进而推断因果、预测未来。我不知道后面几十年这个目标是否可以实现，但是从目前的进展看，似乎还是有希望的。</p>
+
+<p><img src="http://pic.biodiscover.com/files/u/6v/201303081346539541.jpg" alt="gene" /></p>
+
+<p>在这个背景下，我也赶了潮流，这一年基本都浸淫在高维问题中，也算熟悉了其中的一些理论。不过看多了高维问题也确实让人感到厌倦和烦躁，总感觉外表很酷，头脑干瘪，丧失了不少统计的味道。相反，有时简洁有趣的数据分析反而让人感觉更舒服，毕竟具体、实际的问题相比到处泛滥的理论更吸引人。</p>
+
+<p>目前我的这些总结还不多，很多东西都记录的是自己感兴趣的部分。其中主要沿着Fan 2001年的关于Concave Penalty的思路以及后续的发展进行了总结。他的文章对Penalty的问题讨论的很细致很深刻，2013年Fan又进一步提出了Folded Concave Penalty的一些性质，发展了一个较为统一的框架，结合2008年Zou提出的LLA算法，Concave Penalty的求解问题也变得快速，不需要Lasso问题的那些限制条件也具有良好的理论性质。不过正如Fan自己所说，如果没有之前对Lasso问题的详细讨论，LLA算法也不会提出来，虽然与LQA只是一个泰勒展开阶数的差别，但是实际效果却大不一样。潮流总在变化，估计Fan也是不甘心他的思路被现在各种五花八门的Penalty给淹没了吧。</p>
+
+<p>总结文档在<a href="https://github.com/joegaotao/highDim/blob/master/highDim.pdf">Github</a>上，欢迎补充Lasso方面的内容，后续我会添加一些关于高维矩阵方面的心得。</p>
+
+    </div>
+  </article>
+
+  
+
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="../../../../index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          <li>
+            <a href="https://gohugo.io/" class="footer-links-kudos">Made with <img src="../../../../images/hugo-logo.png" width="22" height="22"></a>
+          </li>
+        </ul>
+      </footer>
+
+    </div>
+    
+
+    
+
+    
+  </body>
+</html>
+
