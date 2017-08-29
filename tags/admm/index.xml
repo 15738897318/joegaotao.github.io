@@ -2,22 +2,1115 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Admm on Tao Gao | 高涛</title>
-    <link>http://joegaotao.github.io/tags/admm/</link>
+    <link>/tags/admm/</link>
     <description>Recent content in Admm on Tao Gao | 高涛</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
+    <copyright>高涛 版权所有 2013 - 2017</copyright>
     <lastBuildDate>Tue, 11 Feb 2014 00:00:00 +0000</lastBuildDate>
-    
-	<atom:link href="http://joegaotao.github.io/tags/admm/index.xml" rel="self" type="application/rss+xml" />
-    
+    <atom:link href="/tags/admm/" rel="self" type="application/rss+xml" />
     
     <item>
       <title>分布式计算、统计学习与ADMM算法</title>
-      <link>http://joegaotao.github.io/2014/02/11/%E5%88%86%E5%B8%83%E5%BC%8F%E8%AE%A1%E7%AE%97%E7%BB%9F%E8%AE%A1%E5%AD%A6%E4%B9%A0%E4%B8%8Eadmm%E7%AE%97%E6%B3%95/</link>
+      <link>/2014/02/11/admm-stat-compute/</link>
       <pubDate>Tue, 11 Feb 2014 00:00:00 +0000</pubDate>
       
-      <guid>http://joegaotao.github.io/2014/02/11/%E5%88%86%E5%B8%83%E5%BC%8F%E8%AE%A1%E7%AE%97%E7%BB%9F%E8%AE%A1%E5%AD%A6%E4%B9%A0%E4%B8%8Eadmm%E7%AE%97%E6%B3%95/</guid>
-      <description>在整理旧电脑时，才发现13年下半年电脑里有不少残文。老师说，东西搁下了再拿起来花费的时间和之前可能差不多。我一眼看过去这篇关于分布式计算的文</description>
+      <guid>/2014/02/11/admm-stat-compute/</guid>
+      <description>
+        
+
+&lt;p&gt;在整理旧电脑时，才发现13年下半年电脑里有不少残文。老师说，东西搁下了再拿起来花费的时间和之前可能差不多。我一眼看过去这篇关于分布式计算的文章，貌似还真的没有了当时理解的深度和感觉。当时还想利用ADMM算法，把统计中常见的带惩罚的高维问题在此框架下用R重写一下，但是中途多种事情一耽搁，就早已抛之脑后。看来任何事情，真的还是需要坚持，哪怕拨点时间都是好的。先把一篇残文扔出来祭奠下过去的13年吧。公式多文字长，慎入！&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;业界一直在谈论大数据，对于统计而言，大数据其实意味着要不是样本量增加*n* → ∞，要不就是维度的增加*p* → ∞，亦或者两者同时增加，并且维度与样本量的增长速度呈线性或者指数型增长。在稀疏性的假设条件下，再加上一些正则性方法，统计学家可以证明各种加penalty的模型所给出的参数估计具有良好的统计性质，收敛速度也有保证，同时还会给出一些比较好的迭代算法，但是，他们并没有考虑真实环境下的所消耗的计算时间。虽然统计学家也希望尽量寻求迭代数目比较少的算法（比如one-step估计），但是面对真实的Gb级别以上的数据，很多时候我们还是无法直接用这些算法，原因是一般的硬件都无法支撑直接对所有数据进行运算的要求。如果想减少抽样误差，不想抽样，又想提高估计的精度，那么还是需要寻求其他思路，结合已有的模型思想来解决这些问题。在目前条件下，并行化、分布式计算是一种比较好的解决思路，利用多核和多机器的优势，这些好算法便可以大规模应用，处理大数据优势便体现出来了。对于统计而言，数据量越大当然信息越可能充分（假设冗余成分不是特别多），因为大样本性质本身就希望样本越多越好嘛。&lt;/p&gt;
+
+&lt;p&gt;本文是基于Stephen Boyd 2011年的文章《Distributed Optimization and
+Statistical Learning via the Alternating Direction Method of
+Multipliers》进行的翻译和总结。Boyd也给出了利用matlab的CVX包实现的多种优化问题的&lt;a href=&#34;http://www.stanford.edu/~boyd/papers/admm_distr_stats.html&#34;&gt;matlab示例&lt;/a&gt;。&lt;/p&gt;
+
+&lt;!-- more --&gt;
+
+&lt;ol&gt;
+&lt;li&gt;优化的一些基本算法思想
+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;-&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;ADMM算法并不是一个很新的算法，他只是整合许多不少经典优化思路，然后结合现代统计学习所遇到的问题，提出了一个比较一般的比较好实施的分布式计算框架。因此必须先要了解一些基本算法思想。&lt;/p&gt;
+
+&lt;h3 id=&#34;1-1-dual-ascent&#34;&gt;1.1 Dual Ascent&lt;/h3&gt;
+
+&lt;p&gt;对于凸函数的优化问题，对偶上升法核心思想就是引入一个对偶变量，然后利用交替优化的思路，使得两者同时达到optimal。一个凸函数的对偶函数其实就是原凸函数的一个下界，因此可以证明一个较好的性质：在强对偶性假设下，即最小化原凸函数（primal）等价于最大化对偶函数（dual），两者会同时达到optimal。这种转化可以将原来很多的参数约束条件变得少了很多，以利于做优化。具体表述如下：&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{array}{lc}
+\min &amp;amp; f(x)\&lt;br /&gt;
+s.t. &amp;amp; Ax = b \&lt;br /&gt;
+\end{array}
+\Longrightarrow L(x, y) = f(x) + y^T(Ax - b) \overset{对偶函数（下界）}{\Longrightarrow} g(y) = \inf_x L(x, y)
+$$&lt;/p&gt;
+
+&lt;p&gt;在强对偶性的假设下，primal和dual问题同时达到最优。&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;x&lt;/em&gt;&lt;sup&gt;⋆&lt;/sup&gt; = argmin&lt;sub&gt;&lt;em&gt;x&lt;/em&gt;&lt;/sub&gt;&lt;em&gt;L&lt;/em&gt;(&lt;em&gt;x&lt;/em&gt;, &lt;em&gt;y&lt;/em&gt;&lt;sup&gt;⋆&lt;/sup&gt;)&lt;/p&gt;
+
+&lt;p&gt;因此，若对偶函数&lt;em&gt;g&lt;/em&gt;(&lt;em&gt;y&lt;/em&gt;)可导，便可以利用梯度上升法，交替更新参数，使得同时收敛到最优。迭代如下：&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{split}
+x^{k + 1} : &amp;amp; =\arg\min_x L(x, y^k) \quad \text{($x$-最小化步)} \&lt;br /&gt;
+y^{k + 1} : &amp;amp; = y^k + \alpha^k \nabla g(y) = y^k + \alpha^k (Ax^{k + 1} - b)  \quad \text{(对偶变量更新，$\alpha^k$是步长)} \&lt;br /&gt;
+\end{split}
+$$&lt;/p&gt;
+
+&lt;p&gt;当*g*不可微的时候也可以将其转化下，成为一个所谓的subgradient的方法，虽然看起来不错，简单证明下即可知道&lt;em&gt;x&lt;/em&gt;&lt;sup&gt;&lt;em&gt;k&lt;/em&gt;&lt;/sup&gt;和&lt;em&gt;y&lt;/em&gt;&lt;sup&gt;&lt;em&gt;k&lt;/em&gt;&lt;/sup&gt;同时可达到optimal，但是上述条件要求很苛刻：&lt;em&gt;f&lt;/em&gt;(&lt;em&gt;x&lt;/em&gt;)要求严格凸，并且要求*α*选择有比较合适。一般应用中都不会满足（比如&lt;em&gt;f&lt;/em&gt;(&lt;em&gt;x&lt;/em&gt;)是一个非零的&lt;strong&gt;仿射函数&lt;/strong&gt;），因此dual
+ascent不会直接应用。&lt;/p&gt;
+
+&lt;h3 id=&#34;1-2-dual-decomposition&#34;&gt;1.2 Dual Decomposition&lt;/h3&gt;
+
+&lt;p&gt;虽然dual
+ascent方法有缺陷，要求有些严格，但是他有一个非常好的性质，当目标函数*f*是可分的（&lt;strong&gt;separable&lt;/strong&gt;）时候（参数抑或feature可分），整个问题可以拆解成多个子参数问题，分块优化后汇集起来整体更新。这样非常有利于并行化处理。形式化阐述如下：&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{array}{lc}
+\min &amp;amp; f(x) = \sum^N_{i = 1} f_i(x_i), x_i \in \mathbf{R}^{n_i}, x \in \mathbf{R}^n \&lt;br /&gt;
+s.t. &amp;amp; Ax = \sum^N_{i = 1} A_i x_i = b, \quad \text{(对$A$矩阵按列切分开)} \&lt;br /&gt;
+\end{array}
+\Longrightarrow L(x, y) = \sum^N_{i = 1}L_i(x_i, y) = \sum^N_{i = 1}(f_i(x_i) + y^TA_ix_i - \frac{1}{N}y^Tb)
+$$&lt;/p&gt;
+
+&lt;p&gt;因此可以看到其实下面在迭代优化时，&lt;em&gt;x&lt;/em&gt;-minimization步即可以拆分为多个子问题的并行优化，对偶变量更新不变这对于feature特别多时还是很有用的。&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{split}
+x_i^{k + 1} : &amp;amp; =\arg\min_x L_i(x_i, y^k) \quad \text{(多个$x_i$并行最小化步)} \&lt;br /&gt;
+y^{k + 1} : &amp;amp; = y^k + \alpha^k \nabla g(y) = y^k + \alpha^k (Ax^{k + 1} - b) \quad \text{(汇集整体的$x$，然后对偶变量更新)} \&lt;br /&gt;
+\end{split}
+$$&lt;/p&gt;
+
+&lt;p&gt;对偶分解是非常经典的优化方法，可追溯到1960年代。但是这种想法对后面的分布式优化方法影响较大，比如近期的graph-structure优化问题。&lt;/p&gt;
+
+&lt;h3 id=&#34;1-3-augmented-lagrangians-and-the-method-of-multipliers&#34;&gt;1.3 Augmented Lagrangians and the Method of Multipliers&lt;/h3&gt;
+
+&lt;p&gt;从上面可以看到dual
+ascent方法对于目标函数要求比较苛刻，为了放松假设条件，同时比较好优化，于是就有了Augmented
+Lagrangians方法，目的就是放松对于&lt;em&gt;f&lt;/em&gt;(&lt;em&gt;x&lt;/em&gt;)严格凸的假设和其他一些条件，同时还能使得算法更加稳健。&lt;/p&gt;
+
+&lt;p&gt;$$
+L_{\rho}(x, y) = f(x) + y^T(Ax - b) + \frac{\rho}{2}\|Ax - b\|^2_2
+\Longrightarrow
+\begin{array}{lc}
+\min &amp;amp; f(x) + \frac{\rho}{2}\|Ax - b\|^2_2 \&lt;br /&gt;
+s.t. &amp;amp; Ax = b \&lt;br /&gt;
+\end{array}
+$$&lt;/p&gt;
+
+&lt;p&gt;从上面可以看到该问题等价于最初的问题，因为只要是可行解对目标函数就没有影响。但是加了后面的
+(&lt;em&gt;ρ&lt;/em&gt;/2)∥*A**x* − *b*∥&lt;sub&gt;2&lt;/sub&gt;&lt;sup&gt;2&lt;/sup&gt;
+惩罚项的好处是使得对偶函数
+&lt;em&gt;g&lt;/em&gt;&lt;sub&gt;&lt;em&gt;ρ&lt;/em&gt;&lt;/sub&gt;(&lt;em&gt;y&lt;/em&gt;)=inf&lt;sub&gt;&lt;em&gt;x&lt;/em&gt;&lt;/sub&gt;&lt;em&gt;L&lt;/em&gt;&lt;sub&gt;&lt;em&gt;ρ&lt;/em&gt;&lt;/sub&gt;(&lt;em&gt;x&lt;/em&gt;, &lt;em&gt;y&lt;/em&gt;)
+在更一般的条件下可导。计算过程与之前的dual
+ascent基本一样，除了最小化*x*时候加了扩增项。&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{split}
+x^{k+1} &amp;amp; = \arg\min_x L_{\rho}(x, y^k) \&lt;br /&gt;
+y^{k+1} &amp;amp; = y^k + \rho(Ax^{k+1} - b) \&lt;br /&gt;
+\end{split}
+$$&lt;/p&gt;
+
+&lt;p&gt;上述也称作method of
+multipliers，可能也是因为更新对偶变量*y*时步长由原来变化的&lt;em&gt;α&lt;/em&gt;&lt;sup&gt;&lt;em&gt;k&lt;/em&gt;&lt;/sup&gt;转为固定的*ρ*了吧。该算法在即使&lt;em&gt;f&lt;/em&gt;(&lt;em&gt;x&lt;/em&gt;)不是严格凸或者取值为+∞情况都可以成立，适用面更广。同样可以简单证明primal变量*x*和对偶变量*y*可以同时达到最优。&lt;/p&gt;
+
+&lt;p&gt;虽然Augmented Lagrangians方法有优势，但也破坏了dual
+ascent方法的利用分解参数来并行的优势。当*f*是separable时，对于Augmented
+Lagrangians却是not
+separable的（因为平方项写成矩阵形式无法用之前那种分块形式），因此在*x* − min步时候无法并行优化多个参数&lt;em&gt;x&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt;。如何改进，继续下面的议题就可以慢慢发现改进思想的来源。&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;Alternating Direction Method of Multipliers(ADMM)
+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;-&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h3 id=&#34;2-1-admm算法概述&#34;&gt;2.1 ADMM算法概述&lt;/h3&gt;
+
+&lt;p&gt;为了整合dual ascent可分解性与method
+multiplers优秀的收敛性质，人们就又提出了改进形式的优化ADMM。目的就是想能分解原函数和扩增函数，以便于在对*f*更一般的假设条件下并行优化。ADMM从名字可以看到是在原来Method
+of Multipliers加了个Alternating
+Direction，可以大概猜想到应该是又想引入新变量，然后交叉换方向来交替优化。形式如下：&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{array}{lc}
+\min &amp;amp; f(x) + g(z)\&lt;br /&gt;
+s.t. &amp;amp; Ax + Bz = c \&lt;br /&gt;
+\end{array}
+\Longrightarrow L_{\rho}(x, z, y) = f(x) + g(z) + y^T(Ax + Bz - c) + (\rho/2)\|Ax + Bz - c\|^2_2
+$$&lt;/p&gt;
+
+&lt;p&gt;从上面形式确实可以看出，他的思想确实就是想把primal变量、目标函数拆分，但是不再像dual
+ascent方法那样，将拆分开的&lt;em&gt;x&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt;都看做是*x*的一部分，后面融合的时候还需要融合在一起，而是最先开始就将拆开的变量分别看做是不同的变量*x*和*z*，同时约束条件也如此处理，这样的好处就是后面不需要一起融合*x*和*z*，保证了前面优化过程的可分解性。于是ADMM的优化就变成了如下序贯型迭代（这正是被称作alternating
+direction的缘故）：&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{split}
+x^{k+1} &amp;amp; = \arg\min_x L_{\rho}(x, z^k, y^k) \&lt;br /&gt;
+z^{k+1} &amp;amp; = \arg\min_z L_{\rho}(x^{k+1}, z, y^k) \&lt;br /&gt;
+y^{k+1} &amp;amp; = y^k + \rho(Ax^{k+1} + Bz^{k+1}- c) \&lt;br /&gt;
+\end{split}
+$$&lt;/p&gt;
+
+&lt;p&gt;后面我们可以看到这种拆分思想非常适合统计学习中的ℓ&lt;sub&gt;1&lt;/sub&gt;-norm等问题：loss
++
+regulazition（注意：一定要保证*z*分解出来，ADMM借助的就是用一个*z*变量来简化问题，不管他是约束还是其他形式也罢，需要构造一个*z*出来，后面具体到细节问题我们会有更深的体会）。&lt;/p&gt;
+
+&lt;p&gt;为了简化形式，ADMM有一个scaled
+form形式，其实就是对对偶变量做了scaled处理。先定义每一步更新的残差为*r* = *A&lt;strong&gt;x* + *B&lt;/strong&gt;z* − *c*，于是稍加计算&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{split}
+y^T(Ax + Bz - c) + (\rho/2)\|Ax + Bz - c\|^2_2 &amp;amp;=  y^Tr + (\rho/2)\|r\|^2_2 \&lt;br /&gt;
+&amp;amp; = (\rho/2)\|r + (1/\rho)y\|^2_2 - (&lt;sup&gt;1&lt;/sup&gt;&amp;frasl;&lt;sub&gt;2&lt;/sub&gt;\rho)\|y\|^2_2 \\
+&amp;amp; = (\rho/2)\|r + u\|^2_2 - (\rho/2)\|u\|^2_2 \&lt;br /&gt;
+\end{split}
+$$&lt;/p&gt;
+
+&lt;p&gt;此处*u* = (1/&lt;em&gt;ρ&lt;/em&gt;)*y*称为scaled dual
+variable，并令每一步迭代的残差为&lt;em&gt;r&lt;/em&gt;&lt;sup&gt;&lt;em&gt;k&lt;/em&gt;&lt;/sup&gt; = *A&lt;strong&gt;x*&lt;sup&gt;&lt;em&gt;k&lt;/em&gt;&lt;/sup&gt; + *B&lt;/strong&gt;z*&lt;sup&gt;&lt;em&gt;k&lt;/em&gt;&lt;/sup&gt; − *c*，以及累计残差$u^k = u^0 + \sum^k_{j=1}r^j$，于是ADMM形式就可以简化为如下形式&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{split}
+x^{k+1} &amp;amp; = \arg\min_x L_{\rho}(x, z^k, y^k) = \arg\min(f(x)+(\rho/2)\|Ax + Bz^k - c + u^k\|^2_2)\&lt;br /&gt;
+z^{k+1} &amp;amp; = \arg\min_z L_{\rho}(x^{k+1}, z, y^k) = \arg\min(g(z) + (\rho/2)\|Ax^{k+1} + Bz - c + u^k\|)\&lt;br /&gt;
+u^{k+1} &amp;amp; = u^k + Ax^{k+1} + Bz^{k+1}- c \&lt;br /&gt;
+\end{split}
+$$&lt;/p&gt;
+
+&lt;p&gt;写成这种形式有利于后面简化优化问题，当然可以不作任何处理。&lt;/p&gt;
+
+&lt;h3 id=&#34;2-2-admm算法性质和评价&#34;&gt;2.2 ADMM算法性质和评价&lt;/h3&gt;
+
+&lt;p&gt;&lt;strong&gt;（1）收敛性&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;关于收敛性，需要有两个假设条件：&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;*f*和*g*分别是扩展的实数函数&lt;strong&gt;R&lt;/strong&gt;&lt;sup&gt;&lt;em&gt;n&lt;/em&gt;&lt;/sup&gt;(&lt;strong&gt;R&lt;/strong&gt;&lt;sup&gt;&lt;em&gt;m&lt;/em&gt;&lt;/sup&gt;)→&lt;strong&gt;R&lt;/strong&gt;⋃{ + ∞}，且是closed、proper和convex的；&lt;/li&gt;
+&lt;li&gt;扩增的lagrangian函数&lt;em&gt;L&lt;/em&gt;&lt;sub&gt;0&lt;/sub&gt;有一个鞍点（saddle
+point）；对于约束中的矩阵&lt;em&gt;A&lt;/em&gt;, *B*都不需要满秩。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;在此两个假设下，可以保证残差、目标函数、对偶变量的收敛性。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Note&lt;/strong&gt;：实际应用而言，ADMM收敛速度是很慢的，类似于共轭梯度方法。迭代数十次后只可以得到一个acceptable的结果，与快速的高精度算法（Newton法，内点法等）相比收敛就慢很多了。因此实际应用的时候，其实会将ADMM与其他高精度算法结合起来，这样从一个acceptable的结果变得在预期时间内可以达到较高收敛精度。不过一般在大规模应用问题中，高精度的参数解对于预测效果没有很大的提高，因此实际应用中，短时间内一个acceptable的结果基本就可以直接应用预测了。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;（2）停止准则&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;对于ADMM的能到到optimal的条件此处就不做赘述了，与基本的primal和dual
+feasibility 的条件差不多，即各primal
+variable的偏导和约束条件为0，从最优条件中可以得到所谓的对偶残差（dual
+residuals）和初始残差（primal residuals）形式：&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{split}
+s^{k + 1} &amp;amp; = \rho A^TB(z^{k+1} - z^k) \quad (dual \,\, residuals) \&lt;br /&gt;
+r^{k + 1} &amp;amp; = Ax^{k+1} + Bz^{k+1} - c \quad (primal \,\, residuals) \&lt;br /&gt;
+\end{split}
+$$&lt;/p&gt;
+
+&lt;p&gt;相对而言，此处更难把握的其实是停止准则，因为收敛速度问题，要想获得一个还过得去可以拿来用的参数解，那么判断迭代停止还是比较重要的。实际应用中，一般都根据primal
+residuals和dual
+residuals足够小来停止迭代，阈值包含了绝对容忍度（absolute
+tolerance）和相对容忍度（relative
+tolerance），设置还是非常灵活和难把握的（貌似网上有不少人吐槽这个停止准则的不靠谱-
+-！），具体形式如下：&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{split}
+\|s^k\|_2 \leq \epsilon^{\text{dual}} &amp;amp; = \sqrt{n} \epsilon^{\text{abs}} + \epsilon^{\text{rel}} \|A^Ty^k\|_2 \\
+\|r^k\|_2 \leq \epsilon^{\text{pri}} &amp;amp; = \sqrt{p} \epsilon^{\text{abs}} + \epsilon^{\text{rel}}\max\{\|Ax^k\|_2, \|Bz^k\|, \|c\|_2\} \&lt;br /&gt;
+\end{split}
+$$&lt;/p&gt;
+
+&lt;p&gt;上面的$\sqrt{p}$和$\sqrt{n}$分别是维度和样本量。一般而言，相对停止阈值&lt;em&gt;ϵ&lt;/em&gt;&lt;sup&gt;rel&lt;/sup&gt; = 10&lt;sup&gt;−3&lt;/sup&gt;或者10&lt;sup&gt;−4&lt;/sup&gt;，绝对阈值的选取要根据变量取值范围来选取（咋选的呢？没说额，具体比例都不给说-
+-！）&lt;/p&gt;
+
+&lt;p&gt;另外一些细节问题，比如原来惩罚参数*ρ*是不变的，一些文献也做了一些可变的惩罚参数，目的是为了降低对于惩罚参数初始值的依赖性。不过变动的*ρ*会导致ADMM的收敛性证明比较困难，因此实际中假设经过一系列迭代后*ρ*也稳定，边可直接用固定的惩罚参数*ρ*了。还有其他问题，诸如*x*与*z*迭代顺序问题，实际操作下有所有不同，这些不是特别重要之处，可以忽略。其他与ADMM比较相关算法的有dual
+ADMM算法，distributed ADMM算法，还有整合了ADMM与proximal method of
+multiplier的算法&lt;/p&gt;
+
+&lt;h3 id=&#34;2-3-admm一般形式与部分具体应用&#34;&gt;2.3 ADMM一般形式与部分具体应用&lt;/h3&gt;
+
+&lt;p&gt;当构造了ADMM算法中的&lt;em&gt;f&lt;/em&gt;, &lt;em&gt;g&lt;/em&gt;, &lt;em&gt;A&lt;/em&gt;, *B*后，便可直接应用该算法了。我们会经常遇到如下三种一般形式的问题&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;二次目标优化项（quadratic objective terms）；&lt;/li&gt;
+&lt;li&gt;可分的目标函数和约束（separable objective and constraints）；&lt;/li&gt;
+&lt;li&gt;光滑目标函数项（smooth objective terms）。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;为下面讨论的方便，下面仅写出&lt;em&gt;x&lt;/em&gt;-update的形式，根据ADMM简化形式，&lt;em&gt;z&lt;/em&gt;-update对称更新即可：&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;x&lt;/em&gt;&lt;sup&gt;+&lt;/sup&gt; = argmin&lt;sub&gt;&lt;em&gt;x&lt;/em&gt;&lt;/sub&gt;(&lt;em&gt;f&lt;/em&gt;(&lt;em&gt;x&lt;/em&gt;)+(&lt;em&gt;ρ&lt;/em&gt;/2)∥*A&lt;strong&gt;x* − *v*∥&lt;sub&gt;2&lt;/sub&gt;&lt;sup&gt;2&lt;/sup&gt;),*v* = −*B&lt;/strong&gt;z* + *c* − &lt;em&gt;u&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;上述更新*x*时候*z*和*u*都定下来，是个常数，*z*更新时后相同。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Proximity Operator（近邻算子）&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;上述形式有种特殊情况：当*A* = *I*时，即约束条件没有*x*的线性组合形式，只是对于*x*的可行区域进行限制。这种问题相当常见，目前统计学习也有不少类似的高维优化问题。此时&lt;em&gt;x&lt;/em&gt;-update如下&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;x&lt;/em&gt;&lt;sup&gt;+&lt;/sup&gt; = argmin&lt;sub&gt;&lt;em&gt;x&lt;/em&gt;&lt;/sub&gt;(&lt;em&gt;f&lt;/em&gt;(&lt;em&gt;x&lt;/em&gt;)+(&lt;em&gt;ρ&lt;/em&gt;/2)∥*x* − *v*∥&lt;sub&gt;2&lt;/sub&gt;&lt;sup&gt;2&lt;/sup&gt;),*v* = −*B**z* + *c* − &lt;em&gt;u&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;上述右边可以写成*v*的函数&lt;strong&gt;prox&lt;/strong&gt;&lt;sub&gt;&lt;em&gt;f&lt;/em&gt;, &lt;em&gt;ρ&lt;/em&gt;&lt;/sub&gt;(&lt;em&gt;v&lt;/em&gt;)被称作带惩罚*ρ*的*f*的proximity
+operator（通常称作proximal
+minimization，近邻最小化），在变分分析中，还被称作*f*的&lt;strong&gt;Moreau-Yosida正则化&lt;/strong&gt;。如果*f*形式很简单，可以写出&lt;em&gt;x&lt;/em&gt;-update的解析解，比如*f*是非空的凸包𝒞上的示性函数，那么&lt;em&gt;x&lt;/em&gt;-update就可以直接写成投影形式&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;x&lt;/em&gt;&lt;sup&gt;+&lt;/sup&gt; = argmin&lt;sub&gt;&lt;em&gt;x&lt;/em&gt;&lt;/sub&gt;(&lt;em&gt;f&lt;/em&gt;(&lt;em&gt;x&lt;/em&gt;)+(&lt;em&gt;ρ&lt;/em&gt;/2)∥*x* − *v*∥&lt;sub&gt;2&lt;/sub&gt;&lt;sup&gt;2&lt;/sup&gt;)=&lt;em&gt;Π&lt;/em&gt;&lt;sub&gt;𝒞&lt;/sub&gt;(&lt;em&gt;v&lt;/em&gt;)&lt;/p&gt;
+
+&lt;p&gt;投影与惩罚参数*ρ*无关。若*f*是非负象限
+&lt;strong&gt;R&lt;/strong&gt;&lt;sub&gt;+&lt;/sub&gt;&lt;sup&gt;&lt;em&gt;n&lt;/em&gt;&lt;/sup&gt;
+的投影，则直接有
+&lt;em&gt;x&lt;/em&gt;&lt;sup&gt;+&lt;/sup&gt; = (&lt;em&gt;v&lt;/em&gt;)&lt;sub&gt;+&lt;/sub&gt;
+。&lt;/p&gt;
+
+&lt;p&gt;下面再谈谈上述提到的三种一般形式的优化问题。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;（1）Quadratic Objective Terms&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;假设*f*是如下（凸）的二次函数&lt;/p&gt;
+
+&lt;p&gt;$$
+f(x) = \frac{1}{2}x^TPx + q^T x + r
+$$&lt;/p&gt;
+
+&lt;p&gt;*P*是对称的半正定矩阵*P* ∈ &lt;strong&gt;S&lt;/strong&gt;&lt;sub&gt;+&lt;/sub&gt;&lt;sup&gt;&lt;em&gt;n&lt;/em&gt;&lt;/sup&gt;。这种形式问题也包含了*f*是线性或者常数的特殊情况。若*P* + *ρ*&lt;em&gt;A&lt;/em&gt;&lt;sup&gt;&lt;em&gt;T&lt;/em&gt;&lt;/sup&gt;*A*可逆，那么&lt;em&gt;x&lt;/em&gt;-update步求个导即有如下的显示解，是*v*的仿射函数&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;x&lt;/em&gt;&lt;sup&gt;+&lt;/sup&gt; = (*P* + *ρ&lt;strong&gt;A*&lt;sup&gt;&lt;em&gt;T&lt;/em&gt;&lt;/sup&gt;&lt;em&gt;A&lt;/em&gt;)&lt;sup&gt;−1&lt;/sup&gt;(*ρ&lt;/strong&gt;A*&lt;sup&gt;&lt;em&gt;T&lt;/em&gt;&lt;/sup&gt;*v* − &lt;em&gt;q&lt;/em&gt;)&lt;/p&gt;
+
+&lt;p&gt;因此在&lt;em&gt;x&lt;/em&gt;-minnimiztion步只需要做两个矩阵运算即可，求逆与乘积，选用合适的线性运算库即可以得到不错的计算性能。当然还可以利用一些矩阵分解技巧，这个要看矩阵大小和稀疏程度。因为对于*F**x* = *g*，可以将*F* = &lt;em&gt;F&lt;/em&gt;&lt;sub&gt;1&lt;/sub&gt;&lt;em&gt;F&lt;/em&gt;&lt;sub&gt;2&lt;/sub&gt;⋯&lt;em&gt;F&lt;/em&gt;&lt;sub&gt;&lt;em&gt;k&lt;/em&gt;&lt;/sub&gt;，然后&lt;em&gt;F&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt;&lt;em&gt;z&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt; = &lt;em&gt;z&lt;/em&gt;&lt;sub&gt;*i* − 1&lt;/sub&gt;, &lt;em&gt;z&lt;/em&gt;&lt;sub&gt;1&lt;/sub&gt; = &lt;em&gt;F&lt;/em&gt;&lt;sub&gt;1&lt;/sub&gt;&lt;sup&gt;−1&lt;/sup&gt;&lt;em&gt;g&lt;/em&gt;, *x* = &lt;em&gt;z&lt;/em&gt;&lt;sub&gt;&lt;em&gt;k&lt;/em&gt;&lt;/sub&gt;，这样会更节省计算时间。其他矩阵计算技巧，基本都是如何对矩阵大规模求解，利用矩阵的稀疏性、缓存分解等来提高性能。此处不赘述，有个很重要的求逆的定理很有用：&lt;/p&gt;
+
+&lt;p&gt;(*P* + *ρ&lt;strong&gt;A*&lt;sup&gt;&lt;em&gt;T&lt;/em&gt;&lt;/sup&gt;&lt;em&gt;A&lt;/em&gt;)&lt;sup&gt;−1&lt;/sup&gt; = &lt;em&gt;P&lt;/em&gt;&lt;sup&gt;−1&lt;/sup&gt; − *ρ&lt;/strong&gt;P*&lt;sup&gt;−1&lt;/sup&gt;&lt;em&gt;A&lt;/em&gt;&lt;sup&gt;&lt;em&gt;T&lt;/em&gt;&lt;/sup&gt;(*I* + *ρ&lt;strong&gt;A&lt;/strong&gt;P*&lt;sup&gt;−1&lt;/sup&gt;&lt;em&gt;A&lt;/em&gt;&lt;sup&gt;&lt;em&gt;T&lt;/em&gt;&lt;/sup&gt;)&lt;sup&gt;−1&lt;/sup&gt;*A*&lt;em&gt;P&lt;/em&gt;&lt;sup&gt;−1&lt;/sup&gt;&lt;/p&gt;
+
+&lt;p&gt;如果对于上述二次函数受限于某仿射集&lt;em&gt;x&lt;/em&gt;-update步就更复杂些，如&lt;/p&gt;
+
+&lt;p&gt;$$f(x) = \frac{1}{2}x^T Px + q^T x + r \quad \textbf{dorm} \,f=\{x \| Fx = g\}$$&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;x&lt;/em&gt;-update还有个重要的KKT方程可用：&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{pmatrix}
+P + \rho I &amp;amp; F^T \&lt;br /&gt;
+F &amp;amp; 0 \&lt;br /&gt;
+\end{pmatrix}
+\begin{pmatrix}
+x^{k + 1}\&lt;br /&gt;
+v \&lt;br /&gt;
+\end{pmatrix}
++
+\begin{pmatrix}
+q - \rho(z^k - u^k) \&lt;br /&gt;
+-g \&lt;br /&gt;
+\end{pmatrix}
+= 0
+$$&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;（2）Smooth Objective Terms&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;当*f*光滑时，那么求导即成为可能了。对于一些非线性优化问题，包含梯度算法等方法的L-BFGS算法可以用。对于该算法有些小技巧如下：&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;早终止（early
+termination）：当&lt;em&gt;f&lt;/em&gt;(&lt;em&gt;x&lt;/em&gt;)+(&lt;em&gt;ρ&lt;/em&gt;/2)∥*A**x* − *v*∥&lt;sub&gt;2&lt;/sub&gt;&lt;sup&gt;2&lt;/sup&gt;梯度很小时，早点终止迭代，否则后面就很慢了。&lt;/li&gt;
+&lt;li&gt;热启动（warm start）：即启动迭代时，利用之前迭代过的值带入即可。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;（3）Separable objective and constraints&lt;/strong&gt;
+可分函数和约束对于并行计算和分布式计算来说是一个好消息。如果&lt;em&gt;A&lt;/em&gt;&lt;sup&gt;&lt;em&gt;T&lt;/em&gt;&lt;/sup&gt;*A*是分块的对角阵，那么约束中∥*A&lt;strong&gt;x*∥&lt;sub&gt;2&lt;/sub&gt;&lt;sup&gt;2&lt;/sup&gt;也是可分的，则扩增的拉格朗日函数&lt;em&gt;L&lt;/em&gt;&lt;sub&gt;&lt;em&gt;ρ&lt;/em&gt;&lt;/sub&gt;也是可分的。（注意，此处是指函数中的参数可分成小子块，而不是说数据可分。）下面有一个很重要的例子，即&lt;/strong&gt;soft
+thresholding**（针对&lt;em&gt;l&lt;/em&gt;&lt;sub&gt;1&lt;/sub&gt; + &lt;em&gt;l&lt;/em&gt;&lt;sub&gt;2&lt;/sub&gt;问题）:&lt;/p&gt;
+
+&lt;p&gt;当&lt;em&gt;f&lt;/em&gt;(&lt;em&gt;x&lt;/em&gt;)=*λ*∥*x*∥&lt;sub&gt;1&lt;/sub&gt;, *λ* &amp;gt; 0，并且*A* = *I*时，那么&lt;em&gt;x&lt;/em&gt;-update就变成了&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;x&lt;/em&gt;&lt;sup&gt;+&lt;/sup&gt; = argmin&lt;sub&gt;&lt;em&gt;x&lt;/em&gt;&lt;/sub&gt;(*λ*∥&lt;em&gt;x&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt;∥+(&lt;em&gt;ρ&lt;/em&gt;/2)∥*x* − *v*∥&lt;sub&gt;2&lt;/sub&gt;&lt;sup&gt;2&lt;/sup&gt;)&lt;/p&gt;
+
+&lt;p&gt;这种形式很常见在目前的高维统计中，虽然第一项在0处不可导，但是也有解析解，被称作软阈值（soft
+thresholding），也被称作压缩算子（shrinkage operator）。&lt;/p&gt;
+
+&lt;p&gt;$$
+x^{+}_i = S_{\lambda/\rho}(v_i),
+\rightarrow
+S_k(a) = \left\{
+\begin{array}{lc}
+a - k &amp;amp;, a &amp;gt;k \&lt;br /&gt;
+0, &amp;amp; |a|\leq k\&lt;br /&gt;
+a +k &amp;amp; a &amp;lt; -k \&lt;br /&gt;
+\end{array}
+\right.
+\rightarrow
+S_k(a) = (1 - \frac{k}{|a|})_{+}a
+$$&lt;/p&gt;
+
+&lt;p&gt;在优化领域，软阈值被称作是ℓ&lt;sub&gt;1&lt;/sub&gt;-norm问题的近邻算子（proximity
+operator）。&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;一些具体优化应用
+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;-&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h3 id=&#34;3-1受约束的凸优化问题&#34;&gt;3.1受约束的凸优化问题&lt;/h3&gt;
+
+&lt;p&gt;一般的受约束的凸优化问题可以写成如下形式&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{array}{lc}
+\min &amp;amp; f(x) \&lt;br /&gt;
+s.t &amp;amp; x \in \mathcal{C} \&lt;br /&gt;
+\end{array}
+$$&lt;/p&gt;
+
+&lt;p&gt;此类问题可以写成ADMM形式&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{array}{lc}
+\min &amp;amp; f(x) + g(z)\&lt;br /&gt;
+s.t &amp;amp; x - z = 0 \&lt;br /&gt;
+\end{array}
+\Longrightarrow
+L_{\rho}(x, z, u) = f(x) + g(z) + (\rho/2)\|x - z + u\|^2_2
+$$&lt;/p&gt;
+
+&lt;p&gt;其中的*g*函数即𝒞的示性函数，上述是scaled形式，那么具体算法就是&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{split}
+x^{k+1} &amp;amp; = \arg\min(f(x)+(\rho/2)\|x - z^k + u^k\|^2_2)\&lt;br /&gt;
+z^{k+1} &amp;amp; = \Pi_{\mathcal{C}}(x^{k+1} + u^k) \&lt;br /&gt;
+u^{k+1} &amp;amp; = u^k + x^{k+1} - z^{k+1} \&lt;br /&gt;
+\end{split}
+$$&lt;/p&gt;
+
+&lt;p&gt;则上述*x* − *m&lt;strong&gt;i&lt;/strong&gt;n*就变成了一个具体的受约束的优化问题。比如对于经典的二次规划问题(QP)&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{array}{lc}
+\min &amp;amp; \frac{1}{2}x^TPx + q^T x \&lt;br /&gt;
+s.t &amp;amp; Ax = b, x \geq  0 \&lt;br /&gt;
+\end{array}
+$$&lt;/p&gt;
+
+&lt;p&gt;写成ADMM形式&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{array}{lc}
+\min &amp;amp; f(x) + g(z) \&lt;br /&gt;
+s.t &amp;amp; x - z = 0  \&lt;br /&gt;
+\end{array}
+\Longrightarrow
+\begin{split}
+f(x) &amp;amp; = \frac{1}{2}x^TPx + q^T x,  \,\, \textbf{dorm}\,f = \{x | Ax = b\} \&lt;br /&gt;
+g(z) &amp;amp; = I(\Pi_{R^n_{+}}(z)) \&lt;br /&gt;
+\end{split}
+$$&lt;/p&gt;
+
+&lt;p&gt;即受约束的区域就是
+{*x* ∣ *x* ≥ 0}
+，*g*是向非负象限投影的示性函数。而&lt;em&gt;x&lt;/em&gt;-update就变成了之前在Quadratic
+Objective
+Terms中谈到的&lt;em&gt;f&lt;/em&gt;(&lt;em&gt;x&lt;/em&gt;)有仿射集定义域的优化问题，根据KKT条件即可写出来&lt;em&gt;x&lt;/em&gt;-update更新的形式，参见2.3节。&lt;/p&gt;
+
+&lt;p&gt;如果上述对*x*限制不是限制*x* ≥ 0上，而是一个锥约束（conic
+constraint）*x* ∈ 𝒦，那么&lt;em&gt;x&lt;/em&gt;-update不变，继续上述KKT方程，而只需要变一下&lt;em&gt;z&lt;/em&gt;-update，将向
+&lt;em&gt;R&lt;/em&gt;&lt;sub&gt;+&lt;/sub&gt;&lt;sup&gt;&lt;em&gt;n&lt;/em&gt;&lt;/sup&gt;
+投影改成向𝒦投影。比如将上述约束改成
+$$\{Ax = b, x \in \S^n_{+}\}$$
+，即*x*属于半正定空间，那么向&lt;em&gt;S&lt;/em&gt;&lt;sub&gt;+&lt;/sub&gt;&lt;sup&gt;&lt;em&gt;n&lt;/em&gt;&lt;/sup&gt;投影就变成了一个半正定问题，利用特征值分解可以完成。&lt;strong&gt;这种受约束的凸优化问题的形式化对后续许多问题，特别是我们很关注的ℓ&lt;sub&gt;1&lt;/sub&gt;-norm问题很重要，基本上都是转化成这种形式来直接应用ADMM算法，所以这里要好好把握其核心思想和形式。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;虽然我对优化不在行，但是感觉优化问题还是挺有意思的，下面是一个经典问题，即找到两个非空凸包的交集中的一点。该算法都可以追溯到1930年代的Neumann交替投影算法（alternating
+projections algorithm）：&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{split}
+x^{k + 1} &amp;amp; = \Pi_{\mathcal{C}}(z^k) \&lt;br /&gt;
+z^{k + 1} &amp;amp; = \Pi_{\mathcal{D}}(x^{k + 1}) \&lt;br /&gt;
+\end{split}
+$$&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;Π&lt;/em&gt;&lt;sub&gt;𝒞&lt;/sub&gt;, &lt;em&gt;Π&lt;/em&gt;&lt;sub&gt;𝒟&lt;/sub&gt;
+分别是两个集合的欧式空间投影。写成ADMM形式就是&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{split}
+x^{k + 1} &amp;amp; = \Pi_{\mathcal{C}}(z^k - u^k) \&lt;br /&gt;
+z^{k + 1} &amp;amp; = \Pi_{\mathcal{D}}(x^{k + 1} + u^k) \&lt;br /&gt;
+u^{k + 1} &amp;amp; = u^k + x^{k + 1} - z^{k + 1} \&lt;br /&gt;
+\end{split}
+$$&lt;/p&gt;
+
+&lt;p&gt;上述问题还可推广至找到*N*个非空凸包交集中一个点的问题，这样其实在*x*步是可以并行来做的，于是就有&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{split}
+x_i^{k + 1} &amp;amp; = \Pi_{\mathcal{A}_i}(z^k - u_i^k) \&lt;br /&gt;
+z^{k + 1} &amp;amp; = \frac{1}{N}\sum^N_{i=1}(x_i^{k + 1} + u_i^k) \\
+u_i^{k + 1} &amp;amp; = u_i^k + x_i^{k + 1} - z^{k + 1} \&lt;br /&gt;
+\end{split}
+\Longrightarrow u_i\text{收敛均趋向于0}, z^{k+1} = \bar{x}^{k + 1}
+\begin{split}
+x_i^{k + 1} &amp;amp; = \Pi_{\mathcal{A}_i}(\bar{x}^k - u_i^k) \&lt;br /&gt;
+u_i^{k + 1} &amp;amp; = u_i^k + (x_i^{k + 1} - \bar{x}^{k + 1}) \&lt;br /&gt;
+\end{split}
+$$&lt;/p&gt;
+
+&lt;h3 id=&#34;3-2-ℓ-sub-1-sub-norm问题&#34;&gt;3.2 ℓ&lt;sub&gt;1&lt;/sub&gt;-norm问题&lt;/h3&gt;
+
+&lt;p&gt;高维统计理论的发展，如果要追溯起来我觉得可以从Lasso解法算起，类似的思想在往前追可能是Huber相关的工作。是对于lasso问题，由于当年大家还没搞清楚lasso和boosting之间关系，对于sparsity性质不了解，谁也不知道如何很好地解决这个问题。直到后面Efron提出了LARS算法，对两者的路径解相似性做了很好的阐述，于是后面关于变量选择，关于basis-pursuit，compressed
+sensing，sparse graphical
+models等各种新问题的产生，随后各种优化算法也随之涌现出来，诸如Gradient
+Projection， Proximal methods，ADMM (Alternating Direction Method of
+Multipliers)， (Split) Bregman methods，Nesterov’s
+method。不过要能够大规模部署ℓ&lt;sub&gt;1&lt;/sub&gt;-norm的解决方案，那么这些算法中ADMM可能是首选。此处ℓ&lt;sub&gt;1&lt;/sub&gt;-norm问题并不仅仅指Lasso问题，包含了多种ℓ&lt;sub&gt;1&lt;/sub&gt;-norm类型问题。下面均介绍下。&lt;/p&gt;
+
+&lt;p&gt;之所以说ADMM适合机器学习和统计学习的优化问题，因为大部分机器学习问题基本都是“损失函数+正则项”形式，这种分法恰好可以套用到ADMM的框架&lt;em&gt;f&lt;/em&gt;(&lt;em&gt;x&lt;/em&gt;)+&lt;em&gt;g&lt;/em&gt;(&lt;em&gt;z&lt;/em&gt;)。因此结合ADMM框架基本可以解决很多已有的问题，以及利用ℓ&lt;sub&gt;1&lt;/sub&gt;-norm构造的新的优化问题。下面将先介绍非分布式计算的版本，后面会单开一节来介绍如何分布式计算。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;（1）Least Absolute Deviations&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;先从一个简单的问题开始。在稳健估计中，LAD是一个应用很广的模型，相对于直接优化平方和损失∥*A&lt;strong&gt;x* − *b*∥&lt;sub&gt;2&lt;/sub&gt;&lt;sup&gt;2&lt;/sup&gt;，优化绝对损失∥*A&lt;/strong&gt;x* − *b*∥&lt;sub&gt;1&lt;/sub&gt;，它的抗噪性能更好。在ADMM框架下，往之前的受约束的凸优化问题靠拢，这个问题有简单的迭代算法&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{array}{lc}
+\min &amp;amp; \|z\|_1 \&lt;br /&gt;
+s.t. &amp;amp; Ax - b = z \&lt;br /&gt;
+\end{array}
+\Longrightarrow \text{let} \,\,f(x) = 0, g(z) = \|z\|_1
+\Longrightarrow
+\begin{split}
+x^{k + 1} &amp;amp; = (A^TA)^{-1}A^T(b + z^k - u^k) \&lt;br /&gt;
+z^{k + 1} &amp;amp; = S_{1/\rho}(Ax^{k + 1} - b + u^k) \&lt;br /&gt;
+u^{k + 1} &amp;amp; = u^k + Ax^{k+1} - z^{k + 1} - b \&lt;br /&gt;
+\end{split}
+$$&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;（2）Huber fitting&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Huber问题与上面的其实差不多，只是损失函数形式不同，换成了Huber惩罚函数&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{array}{lc}
+\min &amp;amp; g^{hub}(z) \&lt;br /&gt;
+s.t. &amp;amp; Ax - b = z \&lt;br /&gt;
+\end{array}
+, \,\, g^{hub}(z) = \left\{
+\begin{array}{lc}
+z^&lt;sup&gt;2&lt;/sup&gt;&amp;frasl;&lt;sub&gt;2&lt;/sub&gt;, &amp;amp; |z| \leq 1 \&lt;br /&gt;
+|z| - \frac{1}{2} &amp;amp; |z| &amp;gt; 1 \&lt;br /&gt;
+\end{array}
+\right.
+$$&lt;/p&gt;
+
+&lt;p&gt;因此与LAD除了&lt;em&gt;z&lt;/em&gt;-update不在是proximity
+operator（或称作软阈值）之外，其余均是相同的&lt;/p&gt;
+
+&lt;p&gt;$$z^{k + 1} = \frac{\rho}{1 + \rho}(Ax^{k + 1} - b + u^k) + \frac{1}{1 + \rho}S_{1 + 1/\rho}(Ax^{k+1} - b + u^k)$$&lt;/p&gt;
+
+&lt;p&gt;看着像是proximity operator与一个残差的加权。&lt;/p&gt;
+
+&lt;p&gt;LAD和Huber
+fitting这种问题只是一些传统损失不加正则项的ADMM化，注意一定要构造个*z*出来即可，*x*可以基本不用管，总是需要解的，下面的带有正则项的优化问题，ADMM形式就会更明显。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;（3）Basis Pursuit&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;基追踪法师系数信号处理的一种重要方法。目的是想找到一组稀疏基可以完美恢复信号，换套话说就是为一个线性方程系统找到一个稀疏解。原始形式如下，与lasso有些像：&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{array}{lc}
+\min &amp;amp; \|x\|_1 \&lt;br /&gt;
+s.t. &amp;amp; Ax = b \&lt;br /&gt;
+\end{array}
+$$&lt;/p&gt;
+
+&lt;p&gt;修改成ADMM形式，注意往之前受约束的凸优化问题的那种形式回套，将ℓ&lt;sub&gt;1&lt;/sub&gt;看做约束，然后构造带定义域的&lt;em&gt;f&lt;/em&gt;(&lt;em&gt;x&lt;/em&gt;)，于是就有解&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{array}{lc}
+\min &amp;amp; f(x) + \|z\|_1 \&lt;br /&gt;
+s.t. &amp;amp; x - z = 0 \&lt;br /&gt;
+\end{array}
+\,\,\,
+f(x) = I(\{x \in \mathbf{R}^n| Ax = b\}) \,\, \text{indicator function}
+\Longrightarrow
+\begin{split}
+x^{k + 1} &amp;amp; = \Pi(z^k - u^k) \&lt;br /&gt;
+z^{k + 1} &amp;amp; = S_{1/\rho}(Ax^{k + 1} +  u^k) \&lt;br /&gt;
+u^{k + 1} &amp;amp; = u^k + x^{k+1} - z^{k + 1} \&lt;br /&gt;
+\end{split}
+$$&lt;/p&gt;
+
+&lt;p&gt;其中&lt;em&gt;Π&lt;/em&gt;(&lt;em&gt;z&lt;/em&gt;&lt;sup&gt;&lt;em&gt;k&lt;/em&gt;&lt;/sup&gt; − &lt;em&gt;u&lt;/em&gt;&lt;sup&gt;&lt;em&gt;k&lt;/em&gt;&lt;/sup&gt;)是向一个线性约束的欧式空间中投影{*x* ∈ &lt;em&gt;R&lt;/em&gt;&lt;sup&gt;&lt;em&gt;n&lt;/em&gt;&lt;/sup&gt; ∣ *A**x* = &lt;em&gt;b&lt;/em&gt;}，这也是有直接的显示解的&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;x&lt;/em&gt;&lt;sup&gt;*k* + 1&lt;/sup&gt; = (*I* − &lt;em&gt;A&lt;/em&gt;&lt;sup&gt;&lt;em&gt;T&lt;/em&gt;&lt;/sup&gt;(&lt;em&gt;A&lt;/em&gt;&lt;sup&gt;&lt;em&gt;T&lt;/em&gt;&lt;/sup&gt;&lt;em&gt;A&lt;/em&gt;)&lt;sup&gt;−1&lt;/sup&gt;&lt;em&gt;A&lt;/em&gt;)(*z* − &lt;em&gt;u&lt;/em&gt;&lt;sup&gt;&lt;em&gt;k&lt;/em&gt;&lt;/sup&gt;)+&lt;em&gt;A&lt;/em&gt;&lt;sup&gt;&lt;em&gt;T&lt;/em&gt;&lt;/sup&gt;(*A*&lt;em&gt;A&lt;/em&gt;&lt;sup&gt;&lt;em&gt;T&lt;/em&gt;&lt;/sup&gt;)&lt;sup&gt;−1&lt;/sup&gt;&lt;em&gt;b&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;对于矩阵求逆、分解等用之前矩阵那些小技巧即可加快计算，节省计算资源。&lt;/p&gt;
+
+&lt;p&gt;最近还有一类算法来解决ℓ&lt;sub&gt;1&lt;/sub&gt;问题，被称作&lt;strong&gt;Bregman iteration
+methods&lt;/strong&gt;，对于基追踪相关问题，加正则项的Bregman iteration就是method of
+multiplier，而所谓的split Bregman iteration就等同于
+ADMM。我没有继续深究，应该就是类似于并行化的ADMM算法来解决基追踪问题。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;（4）一般化的损失函数 + ℓ&lt;sub&gt;1&lt;/sub&gt;正则项问题&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;这类问题在高维统计开始时便是一个非常重要的问题，而即使到了现在也是一个非常重要的问题，比如group
+lasso，generalized
+lasso，高斯图模型，Tensor型图模型，与图相关的ℓ&lt;sub&gt;1&lt;/sub&gt;问题等算法的开发，都可以在此框架上直接应用和实施，这正是ADMM一个优势所在，便于快速实施，也便于可能的大规模分布式部署。&lt;/p&gt;
+
+&lt;p&gt;$$
+\min \,\, l(x) + \lambda\|x\|_1,
+\Longrightarrow
+\begin{array}{lc}
+\min &amp;amp; l(x) + g(z) = l(x) + \lambda \|z\|_1 \&lt;br /&gt;
+s.t. &amp;amp; x - z = 0 \&lt;br /&gt;
+\end{array}
+\Longrightarrow
+\begin{split}
+x^{k + 1} &amp;amp; = \arg\min_x (l(x) + (\rho/2)\|x - z^k + u^k\|_2^2) \&lt;br /&gt;
+z^{k + 1} &amp;amp; = S_{1/\rho}(x^{k + 1} +  u^k) \&lt;br /&gt;
+u^{k + 1} &amp;amp; = u^k + x^{k+1} - z^{k + 1} \&lt;br /&gt;
+\end{split}
+$$&lt;/p&gt;
+
+&lt;p&gt;可以看到与Basis Pursuit解法只是在&lt;em&gt;x&lt;/em&gt;-update上有区别：Basis
+Pursuit是构造出来一个投影函数&lt;em&gt;f&lt;/em&gt;(&lt;em&gt;x&lt;/em&gt;)，而一般化的损失函数&lt;em&gt;f&lt;/em&gt;(&lt;em&gt;x&lt;/em&gt;)+ℓ&lt;sub&gt;1&lt;/sub&gt;正则项问题，用ADMM就更为自然。所以很适合作为框架来解决这一类问题：广义线性模型（普通线性、logistic回归、possion回归、softmax回归）+正则项；广义可加模型+正则项；似然函数（高斯图方向）+正则项。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Lasso&lt;/strong&gt;：$f(x) = \frac{1}{2}\|Ax - b\|^2_2$，于是利用ADMM算法，&lt;em&gt;x&lt;/em&gt;-update的解析解就是&lt;em&gt;x&lt;/em&gt;&lt;sup&gt;*k* + 1&lt;/sup&gt; = (&lt;em&gt;A&lt;/em&gt;&lt;sup&gt;&lt;em&gt;T&lt;/em&gt;&lt;/sup&gt;*A* + *ρ*&lt;em&gt;I&lt;/em&gt;)&lt;sup&gt;−1&lt;/sup&gt;(&lt;em&gt;A&lt;/em&gt;&lt;sup&gt;&lt;em&gt;T&lt;/em&gt;&lt;/sup&gt;*b* + &lt;em&gt;ρ&lt;/em&gt;(&lt;em&gt;z&lt;/em&gt;&lt;sup&gt;&lt;em&gt;k&lt;/em&gt;&lt;/sup&gt; − &lt;em&gt;u&lt;/em&gt;&lt;sup&gt;&lt;em&gt;k&lt;/em&gt;&lt;/sup&gt;))；于是&lt;em&gt;x&lt;/em&gt;-update看起来是个岭回归了，因此ADMM对于lasso可以看做迭代的使用岭回归。至于矩阵求逆那些，利用之前的矩阵小技巧解决。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Generalized
+lasso&lt;/strong&gt;：这个问题可能不是那么为众人所熟悉，他是Tibs的儿子搞出来的框罗类似fused
+lasso这种事先定义好的线性变化的惩罚项的模型，损失函数是平方损失，而惩罚变成了一个特殊的参数线性组合&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;$$
+\min \frac{1}{2}\|Ax - b\|^2_2 + \lambda\|Fx\|_1
+$$
+$$
+\Longrightarrow
+\text{1d fused lasso}, \,\, A = I \,\,
+F_{ij} = \left\{
+\begin{array}{lc}
+1 &amp;amp; j = i + 1\&lt;br /&gt;
+-1 &amp;amp; j = i \&lt;br /&gt;
+0 &amp;amp; \text{otherwise} \&lt;br /&gt;
+\end{array}
+\right.
+$$&lt;/p&gt;
+
+&lt;p&gt;$$
+\Longrightarrow
+\min \frac{1}{2}\|x - b\|^2_2 + \lambda \sum^{n-1}_{i = 1}|x_{i + 1} - x_i|
+\Longrightarrow
+A = I, F \,\,\text{二阶差分矩阵，则被称作L1 trend filtering}
+$$&lt;/p&gt;
+
+&lt;p&gt;若将上述这种写成ADMM形式，同样可以放到ADMM算法框架中解决&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{array}{lc}
+\min &amp;amp; \frac{1}{2}\|Ax-b\|^2_2 + \lambda \|z\|_1 \&lt;br /&gt;
+s.t. &amp;amp; Fx - z = 0 \&lt;br /&gt;
+\end{array}
+\Longrightarrow
+\begin{split}
+x^{k + 1} &amp;amp; = (A^TA + \rho F^TF)^{-1}(A^Tb + \rho F^T(z^k - u^k)) \&lt;br /&gt;
+z^{k + 1} &amp;amp; = S_{1/\rho}(Ax^{k + 1} - b + u^k) \&lt;br /&gt;
+u^{k + 1} &amp;amp; = u^k + Fx^{k+1} - z^{k + 1} - b \&lt;br /&gt;
+\end{split}
+$$&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Group lasso&lt;/strong&gt;：graph
+lasso问题应用比较广，对不同组的参数同时进行惩罚，进行一组组参数的挑选，故曰group
+lasso。不同于lasso，其正则项变成了$\sum^N_{i = 1}\|x_i\|_2, x_i \in \mathbf{R}^{n_i}$，lasso其实是group
+lasso的一种特殊形式。正则项并不是完全可分的。此时只是&lt;em&gt;z&lt;/em&gt;-update变成了block的软阈值形式&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;$$
+z^{k+1}_i = S_{\lambda/rho}(x^{k+1}_i + u^k), i = 1,\ldots, N
+\Longrightarrow
+S_{k}(a) = (1 - \frac{k}{\|a\|_2})_{+}a, S(0)=0
+$$&lt;/p&gt;
+
+&lt;p&gt;这种形式还可以扩展到group间有重合的情况，即化成*N*可能存在重合的组&lt;em&gt;G&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt; ⊆ {1, …, &lt;em&gt;n&lt;/em&gt;}。一般来说这种问题会非常难解决，但是对于ADMM算法只需要换下形式就很直接（&lt;em&gt;x&lt;/em&gt;, *z*互换，会变成后面非常重要的一致性优化问题（consensus
+optimization），局部&lt;em&gt;x&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt;与全局真解*z*子集$\hat{z}_i$的对应。）&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{array}{lc}
+\min &amp;amp; \frac{1}{2}\|Az - b\|^2_2 + \lambda \sum^N_{i = 1}\|x_i\|_2, x_i \in \mathbf{R}^{|G_i|} \&lt;br /&gt;
+s.t. &amp;amp; x_i - \hat{z}_i = 0, i = 1, \ldots, N \&lt;br /&gt;
+\end{array}
+$$&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Sparse Gaussian graph
+model&lt;/strong&gt;：对于稀疏高斯图，熟悉该问题的人知道这其实是lasso的图上的推广，损失函数写成似然函数的负数即可
+&lt;em&gt;l&lt;/em&gt;(&lt;em&gt;x&lt;/em&gt;)=&lt;strong&gt;tr&lt;/strong&gt;(*S*&lt;em&gt;X&lt;/em&gt;)−logdet&lt;em&gt;X&lt;/em&gt;, *X* ∈ &lt;em&gt;S&lt;/em&gt;&lt;sub&gt;++&lt;/sub&gt;&lt;sup&gt;&lt;em&gt;n&lt;/em&gt;&lt;/sup&gt;
+。于是原来向量的操作就变成了矩阵操作，ADMM算法也有点变化：&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;$$
+\begin{split}
+X^{k + 1} &amp;amp; = \arg\min_X (\textbf{tr}(SX) - \log\det X + \frac{\rho}{2}\|X - Z^k + U^k\|_F)\&lt;br /&gt;
+Z^{k + 1} &amp;amp; = \arg\min_Z(\lambda\|Z\|_1 + \frac{\rho}{2}\|X^{k+1} - Z + U^k\|_F) \&lt;br /&gt;
+U^{k + 1} &amp;amp; = U^k + X^{k+1} - Z^{k + 1} \&lt;br /&gt;
+\end{split}
+$$&lt;/p&gt;
+
+&lt;p&gt;上述算法继续化简，对于&lt;em&gt;z&lt;/em&gt;-update做逐个元素软阈值操作即可
+&lt;em&gt;Z&lt;/em&gt;&lt;sub&gt;*i&lt;strong&gt;j*&lt;/sub&gt;&lt;sup&gt;*k* + 1&lt;/sup&gt; = &lt;em&gt;S&lt;/em&gt;&lt;sub&gt;&lt;em&gt;λ&lt;/em&gt;/&lt;em&gt;ρ&lt;/em&gt;&lt;/sub&gt;(&lt;em&gt;X&lt;/em&gt;&lt;sub&gt;*i&lt;/strong&gt;j*&lt;/sub&gt;&lt;sup&gt;*K* + 1&lt;/sup&gt; + &lt;em&gt;U&lt;/em&gt;&lt;sub&gt;*i*&lt;em&gt;j&lt;/em&gt;&lt;/sub&gt;&lt;sup&gt;&lt;em&gt;k&lt;/em&gt;&lt;/sup&gt;)
+。对于&lt;em&gt;x&lt;/em&gt;-update也类似操作，直接求导一阶导为0，移项后对对称矩阵做特征值分解即可&lt;/p&gt;
+
+&lt;p&gt;*ρ&lt;strong&gt;X* − &lt;em&gt;X&lt;/em&gt;&lt;sup&gt;−1&lt;/sup&gt; = &lt;em&gt;ρ&lt;/em&gt;(&lt;em&gt;Z&lt;/em&gt;&lt;sup&gt;&lt;em&gt;k&lt;/em&gt;&lt;/sup&gt; − &lt;em&gt;U&lt;/em&gt;&lt;sup&gt;&lt;em&gt;k&lt;/em&gt;&lt;/sup&gt;)−*S* = *Q&lt;/strong&gt;Λ&lt;strong&gt;Q*&lt;sup&gt;&lt;em&gt;T&lt;/em&gt;&lt;/sup&gt;, *Q&lt;/strong&gt;Q*&lt;sup&gt;&lt;em&gt;T&lt;/em&gt;&lt;/sup&gt; = &lt;em&gt;I&lt;/em&gt;, *Λ* = &lt;strong&gt;diag&lt;/strong&gt;(&lt;em&gt;λ&lt;/em&gt;&lt;sub&gt;1&lt;/sub&gt;, …, &lt;em&gt;λ&lt;/em&gt;&lt;sub&gt;&lt;em&gt;n&lt;/em&gt;&lt;/sub&gt;)
+$$
+\rightarrow
+\rho \hat{X} - \hat{X}^{-1} = \Lambda, \hat{X} = Q^TXQ
+$$&lt;/p&gt;
+
+&lt;p&gt;由于*Λ*是对角阵，对于每个对角元素来说，上述问题就是解一个二次方程，解方程后，再将$\hat{X}$变化成*X*即可&lt;/p&gt;
+
+&lt;p&gt;$$
+\hat{X}_{ii} = \frac{\lambda_i + \sqrt{\lambda_i^2 + 4 \rho}}{2\rho}
+\Longrightarrow
+X = Q\hat{X}Q^T
+$$&lt;/p&gt;
+
+&lt;p&gt;总之，上述跟ℓ&lt;sub&gt;1&lt;/sub&gt;相关的问题，基本都可以纳入ADMM框架，并且可以快速求解。&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;Consensus and Sharing
+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;本节讲述的两个优化问题，是非常常见的优化问题，也非常重要，我认为是ADMM算法通往并行和分布式计算的一个途径：consensus和sharing，即一致性优化问题与共享优化问题。&lt;/p&gt;
+
+&lt;h2 id=&#34;consensus&#34;&gt;Consensus&lt;/h2&gt;
+
+&lt;h3 id=&#34;4-1-全局变量一致性优化-global-variable-consensus-optimization-切割数据-参数-变量-维数相同&#34;&gt;4.1 全局变量一致性优化（Global variable consensus optimization）（切割数据，参数（变量）维数相同）&lt;/h3&gt;
+
+&lt;p&gt;所谓全局变量一致性优化问题，即目标函数根据数据分解成*N*子目标函数（子系统），每个子系统和子数据都可以获得一个参数解&lt;em&gt;x&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt;，但是全局解只有一个*z*，于是就可以写成如下优化命题：&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{array}{lc}
+\min &amp;amp; \sum^N_{i = 1}f_i(x_i), x_i \in \mathbf{R}^n\&lt;br /&gt;
+s.t. &amp;amp; x_i - z = 0 \&lt;br /&gt;
+\end{array}
+$$&lt;/p&gt;
+
+&lt;p&gt;注意，此时&lt;em&gt;f&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt; : &lt;strong&gt;R&lt;/strong&gt;&lt;sup&gt;&lt;em&gt;n&lt;/em&gt;&lt;/sup&gt; → &lt;strong&gt;R&lt;/strong&gt;⋃{ + ∞}仍是凸函数，而&lt;em&gt;x&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt;并不是对参数空间进行划分，这里是对数据而言，所以&lt;em&gt;x&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt;维度一样&lt;em&gt;x&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt;, *z* ∈ &lt;strong&gt;R&lt;/strong&gt;&lt;sup&gt;&lt;em&gt;n&lt;/em&gt;&lt;/sup&gt;，与之前的问题并不太一样。这种问题其实就是所谓的并行化处理，或分布式处理，希望从多个分块的数据集中获取相同的全局参数解。&lt;/p&gt;
+
+&lt;p&gt;在ADMM算法框架下（先返回最初从扩增lagrangian导出的ADMM），这种问题解法相当明确：&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{array}{c}
+L_{\rho}(x_1, \ldots, x_N, z, y) = \sum^N_{i=1}(f_i(x_i) + y^T_i(x_i - z) + (\rho/2)\|x_i - z\|^2_2) \&lt;br /&gt;
+s.t. \mathcal{C} = \{(x_1, \ldots, x_N)|x_1 = \ldots = x_N\} \&lt;br /&gt;
+\end{array}
+$$&lt;/p&gt;
+
+&lt;p&gt;$$
+\Longrightarrow
+\begin{split}
+x_i^{k+1} &amp;amp; = \arg\min_x (f_i(x_i) + (y^k_i)^T(x_i - z^k) +  (\rho/2)\|x_i - z\|^2_2)) \&lt;br /&gt;
+z^{k+1} &amp;amp; = \frac{1}{N}\sum^N_{i=1}(x_i^{k+1} + (\frac{1}{\rho}y^k_i)) \&lt;br /&gt;
+y_i^{k+1} &amp;amp; = y_i^k + \rho(x_i^{k+1} - z^{k+1}) \&lt;br /&gt;
+\end{split}
+$$&lt;/p&gt;
+
+&lt;p&gt;对&lt;em&gt;y&lt;/em&gt;-update和&lt;em&gt;z&lt;/em&gt;-update的&lt;em&gt;y&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt;&lt;sup&gt;*k* + 1&lt;/sup&gt;和&lt;em&gt;z&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt;&lt;sup&gt;*k* + 1&lt;/sup&gt;分别求个平均，易得$\bar{y}^{k+1}=0$，于是可以知道&lt;em&gt;z&lt;/em&gt;-update步其实可以简化为$z^{k+1} = \bar{x}^{k+1}$，于是上述ADMM其实可以进一步化简为如下形式：&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{split}
+x_i^{k+1} &amp;amp; = \arg\min_x (f_i(x_i) + (y^k_i)^T(x_i - \bar{x}^k) + (\rho/2)\|x_i - \bar{x}^k\|^2_2)) \&lt;br /&gt;
+y_i^{k+1} &amp;amp; = y_i^k + \rho(x_i^{k+1} - \bar{x}^{k+1}) \&lt;br /&gt;
+\end{split}
+$$&lt;/p&gt;
+
+&lt;p&gt;这种迭代算法写出来了，并行化那么就是轻而易举了，各个子数据分别并行求最小化，然后将各个子数据的解汇集起来求均值，整体更新对偶变量&lt;em&gt;y&lt;/em&gt;&lt;sup&gt;&lt;em&gt;k&lt;/em&gt;&lt;/sup&gt;，然后再继续回带求最小值至收敛。当然也可以分布式部署（hadoop化），但是说起来容易，真正工程实施起来又是另外一回事，各个子节点机器间的通信更新是一个需要细细揣摩的问题。&lt;/p&gt;
+
+&lt;p&gt;另外，对于全局一致性优化，也需要给出相应的终止迭代准则，与一般的ADMM类似，看primal和dual的residuals即可&lt;/p&gt;
+
+&lt;p&gt;$$
+\|r^k\|_2^2 = \sum^N_{i = 1}\|x^k_i - \bar{x}^k\|_2^2, \quad \|s^k\|_2^2 = N\rho\|\bar{x}^k_i - \bar{x}^{k-1}\|_2^2
+$$&lt;/p&gt;
+
+&lt;h3 id=&#34;4-2-带正则项的全局一致性问题&#34;&gt;4.2 带正则项的全局一致性问题&lt;/h3&gt;
+
+&lt;p&gt;下面就是要将之前所谈到的经典的机器学习算法并行化起来。想法很简单，就是对全局变量加上正则项即可，因此ADMM算法只需要改变下&lt;em&gt;z&lt;/em&gt;-update步即可&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{array}{lc}
+\min &amp;amp; \sum^N_{i = 1}f_i(x_i) + g(z), x_i \in \mathbf{R}^n\&lt;br /&gt;
+s.t. &amp;amp; x_i - z = 0 \&lt;br /&gt;
+\end{array}
+\Longrightarrow
+\begin{split}
+x_i^{k+1} &amp;amp; = \arg\min_{x+i} (f_i(x_i) + (y^k_i)^T(x_i - z^k) (\rho/2)\|x_i - z\|^2_2)) \&lt;br /&gt;
+z^{k+1} &amp;amp; = \arg\min_z (g(z) + \sum^N_{i=1}(-(y^k_i)^Tz + (\rho/2)\|x^{k+1}_i - z\|_2^2)) \&lt;br /&gt;
+y_i^{k+1} &amp;amp; = y_i^k + \rho(x_i^{k+1} - z^{k+1})\&lt;br /&gt;
+\end{split}
+$$&lt;/p&gt;
+
+&lt;p&gt;同样的，我们仍对*z*做一个平均处理，于是就有&lt;/p&gt;
+
+&lt;p&gt;$$z^{k+1} = \arg\min_z(g(z) + (N\rho/2)\|z - \bar{x}^{k+1} - (1/\rho)\bar{y}^k\|^2_2)$$&lt;/p&gt;
+
+&lt;p&gt;上述形式都取得是最原始的ADMM形式，简化处理，写成scaled形式即有&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{split}
+x_i^{k+1} &amp;amp; = \arg\min_x (f_i(x_i) + (\rho/2)\|x_i - z^k + u_i^k\|^2_2)) \&lt;br /&gt;
+z^{k+1} &amp;amp; = \arg\min_z (g(z) + (N\rho/2)\|z - x^{k+1}_i - \bar{u}^k\|^2_2) \&lt;br /&gt;
+u_i^{k+1} &amp;amp; = u_i^k + x_i^{k+1} - z^{k+1} \&lt;br /&gt;
+\end{split}
+$$&lt;/p&gt;
+
+&lt;p&gt;这样对于后续处理问题就清晰明了多了。可以看到如果&lt;em&gt;g&lt;/em&gt;(&lt;em&gt;z&lt;/em&gt;)=*λ*∥*z*∥&lt;sub&gt;1&lt;/sub&gt;，即lasso问题，那么&lt;em&gt;z&lt;/em&gt;-update步就用软阈值operator即可。因此，对于大规模数据，要想用lasso等算法，只需要对数据做切块（切块也最好切均匀点），纳入到全局变量一致性的ADMM框架中，即可并行化处理。下面给出一些实例。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;切割大样本数据，并行化计算&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;在经典的统计估计中，我们处理的多半是大样本低维度的数据，现在则多是是大样本高维度的数据。对于经典的大样本低维度数据，如果机器不够好，那么就抽样部分数据亦可以实现较好估计，不过如果没有很好的信息，就是想要对大样本进行处理，那么切割数据，并行计算是一个好的选择。现在的社交网络、网络日志、无线感应网络等都可以这么实施。下面的具体模型都在受约束的凸优化问题中以及ℓ&lt;sub&gt;1&lt;/sub&gt;-norm问题中提过，此处只不过切割数据，做成分布式模型，思想很简单，与带正则项的global
+consensus问题一样的处理。经典问题lasso、sparse logistic
+lasso、SVM都可以纳入如下框架处理。&lt;/p&gt;
+
+&lt;p&gt;有观测阵*A* ∈ &lt;strong&gt;R&lt;/strong&gt;&lt;sup&gt;*m* × &lt;em&gt;n&lt;/em&gt;&lt;/sup&gt;和响应值*b* ∈ &lt;strong&gt;R&lt;/strong&gt;&lt;sup&gt;&lt;em&gt;m&lt;/em&gt;&lt;/sup&gt;，可以对应切分，即对矩阵*A*和向量*b*横着切，&lt;/p&gt;
+
+&lt;p&gt;$$
+A = \begin{pmatrix}
+A_1\&lt;br /&gt;
+\vdots\&lt;br /&gt;
+A_N \&lt;br /&gt;
+\end{pmatrix}
+\quad
+b = \begin{pmatrix}
+b_1 \&lt;br /&gt;
+\vdots\&lt;br /&gt;
+b_N \&lt;br /&gt;
+\end{pmatrix}
+$$&lt;/p&gt;
+
+&lt;p&gt;于是原来带正则项的优化问题就可以按照数据分解到多个子系统上去分别优化，然后汇集起来，形成一个global
+consensus问题。&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{array}{lr}
+\min &amp;amp; \sum^N_{i=1}l_i(A_ix_i - b_i) + r(z) \&lt;br /&gt;
+s.t. &amp;amp; x_i - z = 0, i = 1, \ldots, N \quad x_i, z \in \mathbf{R}^n \&lt;br /&gt;
+\end{array}
+$$&lt;/p&gt;
+
+&lt;p&gt;结合受约束的凸优化问题时所给出来的具体的ADMM算法解的形式，下面直接给出这些问题的ADMM迭代算法公式&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;（1）Lasso&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{split}
+x_i^{k + 1} &amp;amp; = (A_i^TA_i + \rho I)^{-1}(A_i^Tb_i + \rho (z^k - u_i^k)) \&lt;br /&gt;
+z^{k + 1} &amp;amp; = S_{1/\rho N}(\bar{x}^{k + 1} - b + \bar{u}^k) \&lt;br /&gt;
+u_i^{k + 1} &amp;amp; = u_i^k + x_i^{k+1} - z^{k + 1} \&lt;br /&gt;
+\end{split}
+$$&lt;/p&gt;
+
+&lt;p&gt;如果切割的数据量小于维数&lt;em&gt;m&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt; &amp;lt; *n*，那么求解时分解小的矩阵&lt;em&gt;A&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt;&lt;em&gt;A&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt;&lt;sup&gt;&lt;em&gt;T&lt;/em&gt;&lt;/sup&gt; + *ρ**I*即可；其他求逆采用矩阵加速技巧即可。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;（2）Sparse Logistic Regression&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{split}
+x_i^{k + 1} &amp;amp; =  \arg\min_{x_i}(l_i(A_ix_i - b_i) + (\rho/2)\|x_i - z^k + u_i^k\|^2_2\&lt;br /&gt;
+z^{k + 1} &amp;amp; = S_{1/\rho N}(\bar{x}^{k + 1} - \bar{b} + \bar{u}^k) \&lt;br /&gt;
+u_i^{k + 1} &amp;amp; = u_i^k + x_i^{k+1} - z^{k + 1} \&lt;br /&gt;
+\end{split}
+$$&lt;/p&gt;
+
+&lt;p&gt;在&lt;em&gt;x&lt;/em&gt;-update步是需要用一些有效的算法来解决ℓ&lt;sub&gt;2&lt;/sub&gt;正则的logistic回归，比如L-BFGS，其他的优化算法应该问题不大吧。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;（3）SVM&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;注意分类问题和回归问题的损失函数不同，一般都是用&lt;em&gt;l&lt;/em&gt;(sign(&lt;em&gt;t&lt;/em&gt;)&lt;em&gt;y&lt;/em&gt;)形式来寻求最优的分类权重使得分类正确。SVM使用Hinge
+Loss：ℓ(&lt;em&gt;y&lt;/em&gt;)=max(0, 1 − *t* ⋅ &lt;em&gt;y&lt;/em&gt;)，即将预测类别与实际分类符号相反的损失给凸显出来。分布式的ADMM形式&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{split}
+x_i^{k + 1} &amp;amp; =  \arg\min_{x_i}(\mathbf{1}^T(A_ix_i + 1)_{+} + (\rho/2)\|x_i - z^k + u_i^k\|^2_2\&lt;br /&gt;
+z^{k + 1} &amp;amp; = \frac{\rho}{(1/\lambda) + N\rho}(\bar{x}^{k+1} + \bar{u}^k) \&lt;br /&gt;
+u_i^{k + 1} &amp;amp; = u_i^k + x_i^{k+1} - z^{k + 1} \&lt;br /&gt;
+\end{split}
+$$&lt;/p&gt;
+
+&lt;h3 id=&#34;4-3-一般形式的一致性优化问题-切割参数到各子系统-但各子系统目标函数参数维度不同-可能部分重合&#34;&gt;4.3 一般形式的一致性优化问题（切割参数到各子系统，但各子系统目标函数参数维度不同，可能部分重合）&lt;/h3&gt;
+
+&lt;p&gt;上述全局一致性优化问题，我们可以看到，所做的处理不过是对数据分块，然后并行化处理。但是更一般的优化问题是，参数空间也是分块的，即每个子目标函数&lt;em&gt;f&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt;(&lt;em&gt;x&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt;)的参数维度不同&lt;em&gt;x&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt;, ∈&lt;strong&gt;R&lt;/strong&gt;&lt;sup&gt;&lt;em&gt;n&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt;&lt;/sup&gt;，我们称之为局部变量。而局部变量所对应的的也将不再是全局变量*z*，而是全局变量中的一部分&lt;em&gt;z&lt;/em&gt;&lt;sub&gt;&lt;em&gt;g&lt;/em&gt;&lt;/sub&gt;，并且不是像之前的顺序对应，而可能是随便对应到*z*的某个位置。可令*g* = 𝒢(&lt;em&gt;i&lt;/em&gt;, ⋅)，即将&lt;em&gt;x&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt;映射到*z*的某部位&lt;/p&gt;
+
+&lt;p&gt;$$(x_i)_j = z_{\mathcal{G}(i, j)} = \hat{z}_i$$&lt;/p&gt;
+
+&lt;p&gt;如果对所有*i*有𝒢(&lt;em&gt;i&lt;/em&gt;, &lt;em&gt;j&lt;/em&gt;)=*j*，那么&lt;em&gt;x&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt;与*z*就是顺序映射，也就是全局一致性优化问题，否则就不是。结合下图就比较好理解&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://1xji9q.bn1302.livefilestore.com/y2pcd30upmFtOnC91A1u4CJcxhIVfTuXrreyXRitG-WDxP0LroMiGrrhsnJ_He5ZfwuaFgVJYD-z6kjMfN0-NivkgIh4VspDA9v71PRfPQ0NTU/consensus.png&#34; alt=&#34;consensus&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;虽然如果用其他方法来做感觉会复杂，但是纳入到上述ADMM框架，其实只不过是全局一致性优化问题的一个局部化变形，不过此时不是对数据进行分块，是对参数空间进行分块&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{array}{lc}
+\min &amp;amp; \sum^N_{i = 1}f_i(x_i) + g(z), x_i \in \mathbf{R}^{n_i}\&lt;br /&gt;
+s.t. &amp;amp; x_i - \hat{z}_i = 0, i = 1, \ldots N \&lt;br /&gt;
+\end{array}
+\Longrightarrow
+\begin{split}
+x_i^{k+1} &amp;amp; = \arg\min_x (f_i(x_i) + (y^k_i)^Tx_i (\rho/2)\|x_i - \hat{z}_i^k\|^2_2)) \&lt;br /&gt;
+z^{k+1} &amp;amp; = \arg\min_z (\sum^N_{i=1}(-(y^k_i)^T\hat{z}_i + (\rho/2)\|x^{k+1}_i - \hat{z}_i\|_2^2))) \&lt;br /&gt;
+y_i^{k+1} &amp;amp; = y_i^k + \rho(x_i^{k+1} - \hat{z}_i^{k+1}) \&lt;br /&gt;
+\end{split}
+$$&lt;/p&gt;
+
+&lt;p&gt;后续想做平均化处理，即中间会发生重合的参数&lt;em&gt;z&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt;取值一样的，那么&lt;em&gt;z&lt;/em&gt;-update将只能找他对应的那些*x*进行平均化，也就是变成局部了，因为不是所有值都是要全局保持一致的。比如上面那个图中的&lt;em&gt;z&lt;/em&gt;&lt;sub&gt;1&lt;/sub&gt;, &lt;em&gt;z&lt;/em&gt;&lt;sub&gt;2&lt;/sub&gt;, &lt;em&gt;z&lt;/em&gt;&lt;sub&gt;3&lt;/sub&gt;, &lt;em&gt;z&lt;/em&gt;&lt;sub&gt;4&lt;/sub&gt;都分别只要求在部分&lt;em&gt;x&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt;发生了共享需要保持一样，而不是像之前全局要求每个&lt;em&gt;x&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt;对应的都是*z*。即&lt;/p&gt;
+
+&lt;p&gt;$$
+z^{k+1}_g = \frac{\sum_{\mathcal{G}(i,j) = g}((x^{k+1}_i)_j + (1/\rho)(y^k_i)_j)}{\sum_{\mathcal{G}(x, y) = g}1}
+$$&lt;/p&gt;
+
+&lt;p&gt;该式子表示就是*z*的第*g*个变量的平均值来源于所有映射到该变量的*x*与*y*的平均值。与之前的global类似，此时对于*y*的取均值会为0，因此&lt;em&gt;z&lt;/em&gt;-update就变成了更简单的形式&lt;/p&gt;
+
+&lt;p&gt;$$
+z^{k+1}_g = \frac{1}{k_g}\sum_{\mathcal{G}(i,j)=g} (x^{k+1}_i)
+$$&lt;/p&gt;
+
+&lt;p&gt;同全局一致性优化问题一样，我们可以加上正则项，然后也可以变成带正则项的一般形式的一致性优化问题。此处不赘述，与全局基本类似。&lt;/p&gt;
+
+&lt;h2 id=&#34;sharing&#34;&gt;Sharing&lt;/h2&gt;
+
+&lt;h3 id=&#34;4-4-共享问题-sharing-横向切割数据-也可纵向切变量&#34;&gt;4.4 共享问题（sharing）（横向切割数据，也可纵向切变量）&lt;/h3&gt;
+
+&lt;p&gt;与之前的全局变量一致性优化问题类似，共享问题也是一个非常一般而且常见的问题。他的形式如下：&lt;/p&gt;
+
+&lt;p&gt;$$
+\min \,\, \sum^N_{i=1}f_i(x_i) + g(\sum^N_{i=1}x_i)
+$$&lt;/p&gt;
+
+&lt;p&gt;这里的第一部分局部损失&lt;em&gt;f&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt;(&lt;em&gt;x&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt;)与全局一致性优化是一样的，即所有的&lt;em&gt;x&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt; ∈ &lt;strong&gt;R&lt;/strong&gt;&lt;sup&gt;&lt;em&gt;n&lt;/em&gt;&lt;/sup&gt;, *i* = 1, …, *N*同维度，而对于一个共享的目标函数*g*则是新加入的。在实际中，我们常常需要优化每个子数据集上的损失函数，同时还要加上全局数据所带来的损失；或者需要优化每个子系统的部分变量，同时还要优化整个变量。共享问题是一个非常重要而灵活的问题，它也可以纳入到ADMM框架中，形式如下：&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{array}{lc}
+\min &amp;amp; \sum^N_{i=1}f_i(x_i) + g(\sum^N_{i=1}z_i) \&lt;br /&gt;
+s.t. &amp;amp; x_i - z_i = 0, z_i \in \mathbf{R}^n, i = 1, \ldots, N, \&lt;br /&gt;
+\end{array}
+\Longrightarrow
+\begin{split}
+x_i^{k+1} &amp;amp; = \arg\min_{x_i} (f_i(x_i) + (\rho/2)\|x_i - z_i^k + u_i^k\|^2_2)) \&lt;br /&gt;
+z^{k+1} &amp;amp; = \arg\min_z (g(\sum^N_{i = 1}z_i) + \rho/2\sum^N_{i = 1}\|z_i - x^{k+1}_i - u^k_i\|^2_2) \&lt;br /&gt;
+u_i^{k+1} &amp;amp; = u_i^k + x_i^{k+1} - z_i^{k+1} \&lt;br /&gt;
+\end{split}
+$$&lt;/p&gt;
+
+&lt;p&gt;上述形式当然还不够简洁，需要进一步化简。因为&lt;em&gt;x&lt;/em&gt;-update可以不用担心，分机并行处理优化求解即可，而对于&lt;em&gt;z&lt;/em&gt;-update这里面需要对*N**n*个变量求解，想加快速度，就减少变量个数。于是想办法通过和之前那种平均方式一样来简化形式解。&lt;/p&gt;
+
+&lt;p&gt;对于&lt;em&gt;z&lt;/em&gt;-update步，令&lt;em&gt;a&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt; = &lt;em&gt;u&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt;&lt;sup&gt;&lt;em&gt;k&lt;/em&gt;&lt;/sup&gt; + &lt;em&gt;x&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt;&lt;sup&gt;*k* + 1&lt;/sup&gt;，于是&lt;em&gt;z&lt;/em&gt;-update步优化问题转化为&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{array}{lc}
+\min &amp;amp; g(N\bar{z}) + (\rho/2)\sum^N_{i=1}\|z_i - a_i\|^2_2 \&lt;br /&gt;
+s.t. &amp;amp; \bar{z} = \frac{1}{N}\sum^N_{i=1}z_i \&lt;br /&gt;
+\end{array}
+$$&lt;/p&gt;
+
+&lt;p&gt;当$\bar{z}$固定时，那么后面的最优解（类似回归）为$z_i = a_i + \bar{z} - \bar{a}$，带入上式后于是后续优化就开始整体更新（均值化）&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{split}
+x_i^{k+1} &amp;amp; = \arg\min_{x_i} (f_i(x_i) + (\rho/2)\|x_i - x_i^k + \bar{x}^k - \bar{z}^k + u^k\|^2_2)) \&lt;br /&gt;
+z^{k+1} &amp;amp; = \arg\min_z (g(N\bar{z}) + N\rho/2\|\bar{z} - \bar{x}^{k+1} - u^k\|^2_2) \&lt;br /&gt;
+u^{k+1} &amp;amp; = u_i^k + \bar{x}^{k+1} - \bar{z}^{k+1} \&lt;br /&gt;
+\end{split}
+$$&lt;/p&gt;
+
+&lt;p&gt;另外，有证明如果强对偶性存在，那么global
+consensus问题与sharing问题是可以相互转化的，可以同时达到最优，两者存在着很紧密的对偶关系。&lt;/p&gt;
+
+&lt;p&gt;本节开头提过，sharing问题用来切分数据做并行化，也可以切分参数空间做并行化。这对于高维、超高维问题是非常有好处的。因为高维统计中，大样本是一方面问题，而高维度才是重中之重，如果能切分特征到低纬度中去求解，然后在合并起来，那么这将是一个很美妙的事情。上面利用regularized
+global
+consensus问题解决了切分大样本数据的并行化问题，下面利用sharing思想解决常见的高维数据并行化问题&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;切割变量（特征）空间，并行化处理&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;同样假设面对还是一个观测阵*A* ∈ &lt;strong&gt;R&lt;/strong&gt;&lt;sup&gt;*m* × &lt;em&gt;n&lt;/em&gt;&lt;/sup&gt;和响应观测*b* ∈ &lt;strong&gt;R&lt;/strong&gt;&lt;sup&gt;&lt;em&gt;n&lt;/em&gt;&lt;/sup&gt;，此时有*n* &amp;gt; &amp;gt;*m*，那么要么就降维处理，要么就切分维度去处理，或者对于超高维矩阵，切分维度后再降维。此时*A*矩阵就不是像之前横着切分，而是竖着切分，这样对应着参数空间的切分：&lt;/p&gt;
+
+&lt;p&gt;$$
+A = [A_1, \ldots, A_N], A_i \in \mathbf{R}^{m \times n_i}, x = (x_1, \ldots, x_N), x\in \mathbf{R}^{n_i}, \rightarrow Ax = \sum^N_{i = 1}A_ix_i
+$$&lt;/p&gt;
+
+&lt;p&gt;于是正则项也可以切分为$r(x) = \sum^N_{i = 1}r_i(x_i)$。那么最初的min  &lt;em&gt;l&lt;/em&gt;(*A**x* − &lt;em&gt;b&lt;/em&gt;)+&lt;em&gt;r&lt;/em&gt;(&lt;em&gt;x&lt;/em&gt;)形式就变成了&lt;/p&gt;
+
+&lt;p&gt;$$
+\min \,\, l(\sum^N_{i = 1}A_ix_i - b) + \sum^N_{i = 1}r_i(x_i)
+$$&lt;/p&gt;
+
+&lt;p&gt;这个与sharing问题非常接近了，做点变化那就是sharing问题了&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{array}{lc}
+\min &amp;amp; l(\sum^N_{i=1}z_i - b) + \sum^N_{i=1}r_i(x_i) \&lt;br /&gt;
+s.t. &amp;amp; A_ix_i - z_i = 0, i = 1,\ldots, N \&lt;br /&gt;
+\end{array}
+\Longrightarrow
+\begin{split}
+x_i^{k+1} &amp;amp; = \arg\min_{x_i} (r_i(x_i) + (\rho/2)\|A_ix_i - A_ix_i^k + \overline{Ax}^k - \bar{z}^k + u^k\|^2_2)) \&lt;br /&gt;
+z^{k+1} &amp;amp; = \arg\min_z (l(N\bar{z} - b) + N\rho/2\|\bar{z} - \overline{Ax}^{k+1} - u^k\|^2_2) \&lt;br /&gt;
+u^{k+1} &amp;amp; = u_i^k + \overline{Ax}^{k+1} - \bar{z}^{k+1} \&lt;br /&gt;
+\end{split}
+$$&lt;/p&gt;
+
+&lt;p&gt;与之前的global
+consensus问题相比，ADMM框架&lt;em&gt;x&lt;/em&gt;-update与&lt;em&gt;z&lt;/em&gt;-update似乎是反过来了。于是将此形式直接套到Lasso等高维问题即有很具体的形式解了。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;（1）Lasso&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{split}
+x_i^{k+1} &amp;amp; = \arg\min_{x_i} (\lambda\|x_i\|_1+ (\rho/2)\|A_ix_i - A_ix_i^k + \overline{Ax}^k - \bar{z}^k + u^k\|^2_2)) \&lt;br /&gt;
+\bar{z}^{k+1} &amp;amp; = \frac{1}{N + \rho}(b + \rho \overline{Ax}^{k+1} + \rho u^k) \&lt;br /&gt;
+u^{k+1} &amp;amp; = u^k + \overline{Ax}^{k+1} - \bar{z}^{k+1} \&lt;br /&gt;
+\end{split}
+$$&lt;/p&gt;
+
+&lt;p&gt;当$\|A^T_i(A_ix^k_i + \bar{z}^k - \overline{Ax}^k - u^k)\|_2 \leq \lambda/\rho$时&lt;em&gt;x&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt;&lt;sup&gt;*k* + 1&lt;/sup&gt; = 0（第*i*块特征不需要用），这样加快了&lt;em&gt;x&lt;/em&gt;-update速度,不过这个对串行更有效，对并行起来也没有多大用..&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;（2）Group Lasso&lt;/strong&gt;
+与lasso基本一样，只是在&lt;em&gt;x&lt;/em&gt;-update上有一个正则项的不同，有ℓ&lt;sub&gt;1&lt;/sub&gt;-norm变成了ℓ&lt;sub&gt;2&lt;/sub&gt;-norm&lt;/p&gt;
+
+&lt;p&gt;$$
+x_i^{k+1} = \arg\min_{x_i} (\lambda\|x_i\|_2+ (\rho/2)\|A_ix_i - A_ix_i^k + \overline{Ax}^k - \bar{z}^k + u^k\|^2_2)
+$$&lt;/p&gt;
+
+&lt;p&gt;该问题其实就是按组最小化(&lt;em&gt;ρ&lt;/em&gt;/2)∥&lt;em&gt;A&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt;&lt;em&gt;x&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt; − *v*∥&lt;sub&gt;2&lt;/sub&gt;&lt;sup&gt;2&lt;/sup&gt; + *λ*∥&lt;em&gt;x&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt;∥&lt;sub&gt;2&lt;/sub&gt;，解为&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{array}{cc}
+\text{if}\,\, \|A_i^Tv\|_2 \leq \lambda/\rho, &amp;amp; \text{then}\,\, x_i = 0 \&lt;br /&gt;
+\text{otherwise} &amp;amp; x_i = (A^T_iA_i + v I)^{-1}A^T_iv \&lt;br /&gt;
+\end{array}
+$$&lt;/p&gt;
+
+&lt;p&gt;涉及矩阵长短计算时，再看矩阵小技巧。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;（3）Sparse Logstic Regression&lt;/strong&gt;
+也与lasso区别不大，只是&lt;em&gt;z&lt;/em&gt;-update的损失函数不同，其余相同于是&lt;/p&gt;
+
+&lt;p&gt;$$
+\bar{z}^{k+1}  = \arg\min_{\bar{z}} (l(N\bar{z})+ (\rho/2)\|\bar{z} - \overline{Ax}^{k+1} - u^k\|^2_2)
+$$&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;（4）SVM&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;SVM与之前的global consensus时候优化顺序反了过来，与logistic
+rgression只是在&lt;em&gt;z&lt;/em&gt;-update步不同（损失函数不同）：&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{split}
+x_i^{k+1} &amp;amp; = \arg\min_{x_i} (\lambda\|x_i\|_2^2+ (\rho/2)\|A_ix_i - A_ix_i^k + \overline{Ax}^k - \bar{z}^k + u^k\|^2_2)) \&lt;br /&gt;
+\bar{z}^{k+1} &amp;amp; = \arg\min_{\bar{z}}(\mathbf{1}^T(N\bar{z}+\mathbf{1})_{+} + (\rho/2)\|\bar{z} - \overline{Ax}^{k+1} - u^{k+1}\|) \&lt;br /&gt;
+u^{k+1} &amp;amp; = u^k + \overline{Ax}^{k+1} - \bar{z}^{k+1} \&lt;br /&gt;
+\end{split}
+$$&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;z&lt;/em&gt;-update解析解可以写成软阈值算子&lt;/p&gt;
+
+&lt;p&gt;$$
+(\bar{z}^{k+1})_i = \left\{
+\begin{array}{ll}
+v_i - N/\rho, &amp;amp; v_i &amp;gt; -1/N + N/\rho \&lt;br /&gt;
+-1/N, &amp;amp; v_i \in [-1/N, -1/N + N/\rho] \&lt;br /&gt;
+v_i, &amp;amp; v_i &amp;lt; -1/N \&lt;br /&gt;
+\end{array}
+\right.
+v_i = (\overline{Ax}^{k+1} + \bar{u}^k)_i
+$$&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;（5）Generalized Additive Models&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;广义可加模型是一个很适合sharing框架的问题。它本身就是对各个各个特征做了变化后（非参方法），重新表示观测的方式&lt;/p&gt;
+
+&lt;p&gt;$$
+b \approx \sum^n_{j = 1}f_j(x_j)
+$$&lt;/p&gt;
+
+&lt;p&gt;当&lt;em&gt;f&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt;是线性变化时，则退化成普通线性回归。此时我们目标优化的问题是&lt;/p&gt;
+
+&lt;p&gt;$$
+\min \,\, \sum^m_{i = 1}l_i(\sum^n_{j = 1}f_j(x_{ij}) - b_i) + \sum^n_{j = 1}r_j(f_j)
+$$&lt;/p&gt;
+
+&lt;p&gt;其中有*m*个观测，*n*维特征（变量）。&lt;em&gt;r&lt;/em&gt;&lt;sub&gt;&lt;em&gt;j&lt;/em&gt;&lt;/sub&gt;此时是对一个functional的正则，此时这个问题看起来似乎既可以对数据切分，也可以对特征切分，不过此时仍用sharing问题来做，相当于对特征切分为一个特征为一个子系统，于是有&lt;/p&gt;
+
+&lt;p&gt;$$ \begin{split} f_j^{k+1} &amp;amp; = *{f_i &lt;em&gt;j} (r_j(f_j)+
+(/2)^m&lt;/em&gt;{i=1}(f_j(x*{ij}) - f^k_j(x_{ij}) + {z}^k_i + {f}^k_i) +
+u&lt;sup&gt;k_i\\ {z}&lt;/sup&gt;{k+1} &amp;amp; = &lt;em&gt;{{z}}(^m&lt;/em&gt;{i=1}l_i(N{z} - b_i) +
+/2^n_{j=1}|{z} - {f}^{k+1} - u^k| ,, ,{f}^k =
+&lt;sup&gt;n_{j=1}f&lt;/sup&gt;k_j(x_{ij})\ u^{k+1} &amp;amp; = u^k + {f}^{k+1} -
+{z}^{k+1} \ \end{split}&lt;/p&gt;
+
+&lt;p&gt;$$&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;f&lt;/em&gt;&lt;sub&gt;&lt;em&gt;j&lt;/em&gt;&lt;/sub&gt;是一个ℓ&lt;sub&gt;2&lt;/sub&gt;正则的损失，有直接求解的算法求解，*z*可以一块一块的求解？&lt;/p&gt;
+
+&lt;p&gt;最后再说一个经济学中很重要的sharing问题的特例，即交换问题（exchange
+problem）：&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{array}{lc}
+\min &amp;amp; \sum^N_{i = 1}f_i(x_i) \&lt;br /&gt;
+s.t. &amp;amp; \sum^N_{i = 1}x_i = 0, x_i \in \mathbf{R}^n, i = 1, \ldots N \&lt;br /&gt;
+\end{array}
+$$&lt;/p&gt;
+
+&lt;p&gt;此时共享目标函数*g* = 0。&lt;em&gt;x&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt;可以表示不同物品在*N*个系统上的交换数量，(&lt;em&gt;x&lt;/em&gt;&lt;sub&gt;&lt;em&gt;i&lt;/em&gt;&lt;/sub&gt;)&lt;sub&gt;&lt;em&gt;j&lt;/em&gt;&lt;/sub&gt;可以表示物品*j*从子系统*i*上收到的交换数目，约束条件就可以看做在这些系统中物品交换是保持均衡稳定的。于是转化为sharing问题，就有很简单的ADMM解法（或者当做之前讲过的受约束的凸优化问题来解，做投影）：&lt;/p&gt;
+
+&lt;p&gt;$$
+\begin{split}
+x_i^{k+1} &amp;amp; = \arg\min_{x_i} (f_i(x_i) + (\rho/2)\|x_i - x_i^k + \bar{x}^k + u^k\|^2_2)) \&lt;br /&gt;
+u^{k+1} &amp;amp; = u_i^k + \bar{x}^{k+1} \&lt;br /&gt;
+\end{split}
+$$&lt;/p&gt;
+
+&lt;h3 id=&#34;4-4-应用小总结&#34;&gt;4.4 应用小总结&lt;/h3&gt;
+
+&lt;p&gt;感觉上通过consensus problem和general consensus
+problem，我们可以看到并行和分布式部署优化方案的可行性。我们可以切分数据以及相应的目标函数，也可以切分变量到各个子系统上去，分别作优化，甚至我们可以大胆想象对不同类型数据块用不同的优化算法，结合consensus问题和ADMM算法，达到同一个global
+variable的优化目的；或者对不同变量在不同类型数据块上优化，即使有重叠，也可以结合general
+consensus思想和ADMM算法来解决这个问题。当然前提是能够定义好需要估计的参数和优化的目标函数！大规模部署的前景还是很不错的。下面具体分布式统计模型的构建便是ADMM算法非常好的应用。切分数据、切分变量（不过每个子系统的目标函数基本都是一样的，其实应该可以不同）&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;Nonconvex问题
+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;-&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h3 id=&#34;5-1-变量选择-regressor-selection&#34;&gt;5.1 变量选择（Regressor Selection）&lt;/h3&gt;
+
+&lt;h3 id=&#34;5-2-因子模型-factor-model-fitting&#34;&gt;5.2 因子模型（Factor Model Fitting）&lt;/h3&gt;
+
+&lt;h3 id=&#34;5-3-双凸优化-bi-convex-problem&#34;&gt;5.3 双凸优化（Bi-convex Problem）&lt;/h3&gt;
+
+&lt;p&gt;非负矩阵分解（Nonnegative Matrix Factorization）&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;具体实施与实际计算结果
+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;-&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;这块真的很实际，需要明白MPI的机理和Mapreduce、Graphlab等通信运作的机理，这样才好部署ADMM算法，因为中间有很多迭代，需要做好子节点间参数与整体参数的通信，保持迭代时能同步更新参数。看实际运作，MPI和GraphLab可能更适合这种框架，Hadoop也是可以的，不过毕竟不是为迭代算法所生，要做好需要进行一些优化。Boyd提到Hadoop其中的Hbase更适合这种框架，因为Hbase是一种大表格，带有时间戳，适合记录迭代的记录，这样就不容易导致分布计算时候搞不清是哪一步的迭代结果了，导致通信调整比较复杂。不过在MapReduce框架下实施ADMM算法是没有什么问题的，只要熟稔Hadoop的一些细节部分，基本没有太大问题。&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;总结
+&amp;mdash;&amp;mdash;-&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;一个好的一般性算法，我个人觉得是易实施，并可大规模应用许多问题。可以让统计学家卡在搞算法的瓶颈中解放出来，使得他们能快速用模拟，验证自己构建可能较为复杂的模型。只有当看到一个令人感到欣慰的结果时，那些模型的统计性质的证明才可能是有意义的，如果事先连希望都看不到，那证明起来都可能底气不足，让人难以信服，更难以大规模应用统计学家所构建的模型。现在是一个高维数据、海量数据的年代，算法的重要性更会凸显出来，一个好的模型如果没有一个有效的算法支撑，那么他将可能什么都不是，Lasso头几年所遭遇的冷遇也充分证明了这一点，再比如在没有计算机年代，Pearson的矩估计应用反而远多于Fisher的MLE估计方法也是一个道理。好的一般性的解决方案，我想这不管是优化理论，还是统计等其他应用学科，虽然知道没有最牛最终极的方法，但是能涌现一些大范围适用的方法，那就是再好不过了。一招鲜吃遍天，人还都是喜欢简单、安逸爱偷懒的嘛..&lt;/p&gt;
+
+        
+      </description>
     </item>
     
   </channel>

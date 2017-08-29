@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Hampel on Tao Gao | 高涛</title>
+    <link>/tags/hampel/</link>
+    <description>Recent content in Hampel on Tao Gao | 高涛</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <copyright>高涛 版权所有 2013 - 2017</copyright>
+    <lastBuildDate>Mon, 28 Aug 2017 00:00:00 +0000</lastBuildDate>
+    <atom:link href="/tags/hampel/" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>一点读书笔记：稳健统计</title>
+      <link>/2017/08/28/%E4%B8%80%E7%82%B9%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0%E7%A8%B3%E5%81%A5%E7%BB%9F%E8%AE%A1/</link>
+      <pubDate>Mon, 28 Aug 2017 00:00:00 +0000</pubDate>
+      
+      <guid>/2017/08/28/%E4%B8%80%E7%82%B9%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0%E7%A8%B3%E5%81%A5%E7%BB%9F%E8%AE%A1/</guid>
+      <description>
+        &lt;p&gt;前阵子&lt;a href=&#34;https://arxiv.org/abs/1703.04730&#34;&gt;ICML2017最佳论文&lt;/a&gt;出来了，发现竟然是妥妥的统计思想文章，于是顺藤摸瓜找到了论文提到的“&lt;a href=&#34;http://as.wiley.com/WileyCDA/WileyTitle/productCd-1118150686.html&#34;&gt;Robust Statistics: The Approach Based on Influence Functions&lt;/a&gt;”一书，其对论文所使用的思想有完整论述。本来我只是想花几分钟随意翻翻，呼吸下来自30年前的知识的气息，谁知书中第一章优美的文字和有意趣的配图，竟让我不知不觉细细品味完了他的第一章！而且觉得这书即使拿到30年后，其中的论述也非常深刻！可见，一本书或者论文写好前言多么的重要，否则一本老古董书大概率就埋葬在茫茫书海中，鲜有人问津了。写这本书的是ETHZ的&lt;a href=&#34;http://stat.ethz.ch/~hampel/&#34;&gt;Hampel老爷爷&lt;/a&gt;，主页上的花白大胡子照片让人觉得甚是和蔼可亲，他的研究兴趣还有统计哲学基础，细想怪不得写书这么娓娓道来，引人入胜，喜探究思想类的人一般文笔都会挺好：）（至于ICML最佳论文，在另开一篇文章再谈。）&lt;/p&gt;
+&lt;p&gt;书的前言介绍了几个观念：&lt;/p&gt;
+&lt;ol style=&#34;list-style-type: decimal&#34;&gt;
+&lt;li&gt;什么是稳健统计？&lt;/li&gt;
+&lt;li&gt;为什么稳健统计重要？&lt;/li&gt;
+&lt;li&gt;稳健统计有哪些派别和方法，作者提出方法和以后的有什么区别和联系？&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;我个人感兴趣的是，这些方法怎么与实际我们的问题结合，当前的数据分析方法有哪些可以与之结合的点。遂摘其中一些文字做些笔记&lt;/p&gt;
+&lt;div class=&#34;section level3&#34;&gt;
+&lt;h3&gt;1. 什么稳健统计？&lt;/h3&gt;
+&lt;p&gt;稳健统计与稳定性的联系，郁彬老师一直在推广的“可预测性、稳定性和可计算性”，其中的稳定性就是指她2013年提出的ES-CV思路，不同于CV的着眼于最小化平均预测误差来挑选模型，而是从最小化平均预测误差方差与自身方差的比值，直觉就是让选出来的模型平均预测误差比较稳，方差比较小，这样具备更好的泛化能力。&lt;/p&gt;
+&lt;p&gt;这个思想其实与之前谈模型融合的某些思想不谋而合，与稳健统计中的permutation也有联系之处。&lt;/p&gt;
+&lt;/div&gt;
+
+        
+      </description>
+    </item>
+    
+  </channel>
+</rss>

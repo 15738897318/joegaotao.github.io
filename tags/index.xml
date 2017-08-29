@@ -2,103 +2,192 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Tags on Tao Gao | 高涛</title>
-    <link>http://joegaotao.github.io/tags/</link>
+    <link>/tags/</link>
     <description>Recent content in Tags on Tao Gao | 高涛</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
+    <copyright>高涛 版权所有 2013 - 2017</copyright>
     <lastBuildDate>Tue, 11 Feb 2014 00:00:00 +0000</lastBuildDate>
-    
-	<atom:link href="http://joegaotao.github.io/tags/index.xml" rel="self" type="application/rss+xml" />
-    
+    <atom:link href="/tags/" rel="self" type="application/rss+xml" />
     
     <item>
       <title>Admm</title>
-      <link>http://joegaotao.github.io/tags/admm/</link>
+      <link>/tags/admm/</link>
       <pubDate>Tue, 11 Feb 2014 00:00:00 +0000</pubDate>
       
-      <guid>http://joegaotao.github.io/tags/admm/</guid>
-      <description></description>
+      <guid>/tags/admm/</guid>
+      <description>
+        
+        
+      </description>
+    </item>
+    
+    <item>
+      <title>Ensemble</title>
+      <link>/tags/ensemble/</link>
+      <pubDate>Mon, 28 Aug 2017 00:00:00 +0000</pubDate>
+      
+      <guid>/tags/ensemble/</guid>
+      <description>
+        
+        
+      </description>
     </item>
     
     <item>
       <title>Pku</title>
-      <link>http://joegaotao.github.io/tags/pku/</link>
+      <link>/tags/pku/</link>
       <pubDate>Sat, 10 Aug 2013 00:00:00 +0000</pubDate>
       
-      <guid>http://joegaotao.github.io/tags/pku/</guid>
-      <description></description>
+      <guid>/tags/pku/</guid>
+      <description>
+        
+        
+      </description>
     </item>
     
     <item>
       <title>优化算法</title>
-      <link>http://joegaotao.github.io/tags/%E4%BC%98%E5%8C%96%E7%AE%97%E6%B3%95/</link>
+      <link>/tags/%E4%BC%98%E5%8C%96%E7%AE%97%E6%B3%95/</link>
       <pubDate>Tue, 11 Feb 2014 00:00:00 +0000</pubDate>
       
-      <guid>http://joegaotao.github.io/tags/%E4%BC%98%E5%8C%96%E7%AE%97%E6%B3%95/</guid>
-      <description></description>
+      <guid>/tags/%E4%BC%98%E5%8C%96%E7%AE%97%E6%B3%95/</guid>
+      <description>
+        
+        
+      </description>
     </item>
     
     <item>
       <title>分布式</title>
-      <link>http://joegaotao.github.io/tags/%E5%88%86%E5%B8%83%E5%BC%8F/</link>
+      <link>/tags/%E5%88%86%E5%B8%83%E5%BC%8F/</link>
       <pubDate>Tue, 11 Feb 2014 00:00:00 +0000</pubDate>
       
-      <guid>http://joegaotao.github.io/tags/%E5%88%86%E5%B8%83%E5%BC%8F/</guid>
-      <description></description>
+      <guid>/tags/%E5%88%86%E5%B8%83%E5%BC%8F/</guid>
+      <description>
+        
+        
+      </description>
     </item>
     
     <item>
       <title>博客</title>
-      <link>http://joegaotao.github.io/tags/%E5%8D%9A%E5%AE%A2/</link>
+      <link>/tags/%E5%8D%9A%E5%AE%A2/</link>
       <pubDate>Sun, 11 Jun 2017 00:00:00 +0000</pubDate>
       
-      <guid>http://joegaotao.github.io/tags/%E5%8D%9A%E5%AE%A2/</guid>
-      <description></description>
+      <guid>/tags/%E5%8D%9A%E5%AE%A2/</guid>
+      <description>
+        
+        
+      </description>
     </item>
     
     <item>
       <title>变量选择</title>
-      <link>http://joegaotao.github.io/tags/%E5%8F%98%E9%87%8F%E9%80%89%E6%8B%A9/</link>
+      <link>/tags/%E5%8F%98%E9%87%8F%E9%80%89%E6%8B%A9/</link>
       <pubDate>Fri, 05 Jul 2013 00:00:00 +0000</pubDate>
       
-      <guid>http://joegaotao.github.io/tags/%E5%8F%98%E9%87%8F%E9%80%89%E6%8B%A9/</guid>
-      <description></description>
+      <guid>/tags/%E5%8F%98%E9%87%8F%E9%80%89%E6%8B%A9/</guid>
+      <description>
+        
+        
+      </description>
+    </item>
+    
+    <item>
+      <title>抽样</title>
+      <link>/tags/%E6%8A%BD%E6%A0%B7/</link>
+      <pubDate>Mon, 28 Aug 2017 00:00:00 +0000</pubDate>
+      
+      <guid>/tags/%E6%8A%BD%E6%A0%B7/</guid>
+      <description>
+        
+        
+      </description>
     </item>
     
     <item>
       <title>暑期课程</title>
-      <link>http://joegaotao.github.io/tags/%E6%9A%91%E6%9C%9F%E8%AF%BE%E7%A8%8B/</link>
+      <link>/tags/%E6%9A%91%E6%9C%9F%E8%AF%BE%E7%A8%8B/</link>
       <pubDate>Sat, 10 Aug 2013 00:00:00 +0000</pubDate>
       
-      <guid>http://joegaotao.github.io/tags/%E6%9A%91%E6%9C%9F%E8%AF%BE%E7%A8%8B/</guid>
-      <description></description>
+      <guid>/tags/%E6%9A%91%E6%9C%9F%E8%AF%BE%E7%A8%8B/</guid>
+      <description>
+        
+        
+      </description>
+    </item>
+    
+    <item>
+      <title>模型融合</title>
+      <link>/tags/%E6%A8%A1%E5%9E%8B%E8%9E%8D%E5%90%88/</link>
+      <pubDate>Mon, 28 Aug 2017 00:00:00 +0000</pubDate>
+      
+      <guid>/tags/%E6%A8%A1%E5%9E%8B%E8%9E%8D%E5%90%88/</guid>
+      <description>
+        
+        
+      </description>
     </item>
     
     <item>
       <title>正则化</title>
-      <link>http://joegaotao.github.io/tags/%E6%AD%A3%E5%88%99%E5%8C%96/</link>
+      <link>/tags/%E6%AD%A3%E5%88%99%E5%8C%96/</link>
       <pubDate>Tue, 11 Feb 2014 00:00:00 +0000</pubDate>
       
-      <guid>http://joegaotao.github.io/tags/%E6%AD%A3%E5%88%99%E5%8C%96/</guid>
-      <description></description>
+      <guid>/tags/%E6%AD%A3%E5%88%99%E5%8C%96/</guid>
+      <description>
+        
+        
+      </description>
+    </item>
+    
+    <item>
+      <title>相关性</title>
+      <link>/tags/%E7%9B%B8%E5%85%B3%E6%80%A7/</link>
+      <pubDate>Mon, 28 Aug 2017 00:00:00 +0000</pubDate>
+      
+      <guid>/tags/%E7%9B%B8%E5%85%B3%E6%80%A7/</guid>
+      <description>
+        
+        
+      </description>
     </item>
     
     <item>
       <title>线性模型</title>
-      <link>http://joegaotao.github.io/tags/%E7%BA%BF%E6%80%A7%E6%A8%A1%E5%9E%8B/</link>
+      <link>/tags/%E7%BA%BF%E6%80%A7%E6%A8%A1%E5%9E%8B/</link>
       <pubDate>Fri, 05 Jul 2013 00:00:00 +0000</pubDate>
       
-      <guid>http://joegaotao.github.io/tags/%E7%BA%BF%E6%80%A7%E6%A8%A1%E5%9E%8B/</guid>
-      <description></description>
+      <guid>/tags/%E7%BA%BF%E6%80%A7%E6%A8%A1%E5%9E%8B/</guid>
+      <description>
+        
+        
+      </description>
+    </item>
+    
+    <item>
+      <title>随机森林</title>
+      <link>/tags/%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/</link>
+      <pubDate>Mon, 28 Aug 2017 00:00:00 +0000</pubDate>
+      
+      <guid>/tags/%E9%9A%8F%E6%9C%BA%E6%A3%AE%E6%9E%97/</guid>
+      <description>
+        
+        
+      </description>
     </item>
     
     <item>
       <title>高维统计</title>
-      <link>http://joegaotao.github.io/tags/%E9%AB%98%E7%BB%B4%E7%BB%9F%E8%AE%A1/</link>
+      <link>/tags/%E9%AB%98%E7%BB%B4%E7%BB%9F%E8%AE%A1/</link>
       <pubDate>Sat, 10 Aug 2013 00:00:00 +0000</pubDate>
       
-      <guid>http://joegaotao.github.io/tags/%E9%AB%98%E7%BB%B4%E7%BB%9F%E8%AE%A1/</guid>
-      <description></description>
+      <guid>/tags/%E9%AB%98%E7%BB%B4%E7%BB%9F%E8%AE%A1/</guid>
+      <description>
+        
+        
+      </description>
     </item>
     
   </channel>

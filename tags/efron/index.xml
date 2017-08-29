@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Efron on Tao Gao | 高涛</title>
+    <link>/tags/efron/</link>
+    <description>Recent content in Efron on Tao Gao | 高涛</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <copyright>高涛 版权所有 2013 - 2017</copyright>
+    <lastBuildDate>Mon, 14 Aug 2017 00:00:00 +0000</lastBuildDate>
+    <atom:link href="/tags/efron/" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>读Efron和Hastie新书</title>
+      <link>/2017/08/14/efron-new-book/</link>
+      <pubDate>Mon, 14 Aug 2017 00:00:00 +0000</pubDate>
+      
+      <guid>/2017/08/14/efron-new-book/</guid>
+      <description>
+        &lt;p&gt;最近因为挖稳健统计的坟，却不知不觉把Efron和Hastie的新书粗翻了一遍。两个老爷子这么大把年纪了，还能敲键盘写书写代码，不能不让人感叹他们对统计的热爱，对教书育人的热爱。Standford真是个神奇的地方，因为Efron、Hastie、Tibshirani三人组的存在，我总觉得统计研究中不仅有智慧，还有温情（Hastie和Tibs一起有个ELS的公开课，两个人一唱一和，特别有爱），好想做他们的学生啊~&lt;/p&gt;
+
+        
+      </description>
+    </item>
+    
+  </channel>
+</rss>

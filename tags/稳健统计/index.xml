@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>稳健统计 on Tao Gao | 高涛</title>
+    <link>/tags/%E7%A8%B3%E5%81%A5%E7%BB%9F%E8%AE%A1/</link>
+    <description>Recent content in 稳健统计 on Tao Gao | 高涛</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <copyright>高涛 版权所有 2013 - 2017</copyright>
+    <lastBuildDate>Mon, 28 Aug 2017 00:00:00 +0000</lastBuildDate>
+    <atom:link href="/tags/%E7%A8%B3%E5%81%A5%E7%BB%9F%E8%AE%A1/" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>一点读书笔记：稳健统计</title>
+      <link>/2017/08/28/%E4%B8%80%E7%82%B9%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0%E7%A8%B3%E5%81%A5%E7%BB%9F%E8%AE%A1/</link>
+      <pubDate>Mon, 28 Aug 2017 00:00:00 +0000</pubDate>
+      
+      <guid>/2017/08/28/%E4%B8%80%E7%82%B9%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0%E7%A8%B3%E5%81%A5%E7%BB%9F%E8%AE%A1/</guid>
+      <description>
+        &lt;p&gt;前阵子&lt;a href=&#34;https://arxiv.org/abs/1703.04730&#34;&gt;ICML2017最佳论文&lt;/a&gt;出来了，发现竟然是妥妥的统计思想文章，于是顺藤摸瓜找到了论文提到的“&lt;a href=&#34;http://as.wiley.com/WileyCDA/WileyTitle/productCd-1118150686.html&#34;&gt;Robust Statistics: The Approach Based on Influence Functions&lt;/a&gt;”一书，其对论文所使用的思想有完整论述。本来我只是想花几分钟随意翻翻，呼吸下来自30年前的知识的气息，谁知书中第一章优美的文字和有意趣的配图，竟让我不知不觉细细品味完了他的第一章！而且觉得这书即使拿到30年后，其中的论述也非常深刻！可见，一本书或者论文写好前言多么的重要，否则一本老古董书大概率就埋葬在茫茫书海中，鲜有人问津了。写这本书的是ETHZ的&lt;a href=&#34;http://stat.ethz.ch/~hampel/&#34;&gt;Hampel老爷爷&lt;/a&gt;，主页上的花白大胡子照片让人觉得甚是和蔼可亲，他的研究兴趣还有统计哲学基础，细想怪不得写书这么娓娓道来，引人入胜，喜探究思想类的人一般文笔都会挺好：）（至于ICML最佳论文，在另开一篇文章再谈。）&lt;/p&gt;
+&lt;p&gt;书的前言介绍了几个观念：&lt;/p&gt;
+&lt;ol style=&#34;list-style-type: decimal&#34;&gt;
+&lt;li&gt;什么是稳健统计？&lt;/li&gt;
+&lt;li&gt;为什么稳健统计重要？&lt;/li&gt;
+&lt;li&gt;稳健统计有哪些派别和方法，作者提出方法和以后的有什么区别和联系？&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;我个人感兴趣的是，这些方法怎么与实际我们的问题结合，当前的数据分析方法有哪些可以与之结合的点。遂摘其中一些文字做些笔记&lt;/p&gt;
+&lt;div class=&#34;section level3&#34;&gt;
+&lt;h3&gt;1. 什么稳健统计？&lt;/h3&gt;
+&lt;p&gt;稳健统计与稳定性的联系，郁彬老师一直在推广的“可预测性、稳定性和可计算性”，其中的稳定性就是指她2013年提出的ES-CV思路，不同于CV的着眼于最小化平均预测误差来挑选模型，而是从最小化平均预测误差方差与自身方差的比值，直觉就是让选出来的模型平均预测误差比较稳，方差比较小，这样具备更好的泛化能力。&lt;/p&gt;
+&lt;p&gt;这个思想其实与之前谈模型融合的某些思想不谋而合，与稳健统计中的permutation也有联系之处。&lt;/p&gt;
+&lt;/div&gt;
+
+        
+      </description>
+    </item>
+    
+    <item>
+      <title>统计诊断、稳健统计与ICML2017最佳论文</title>
+      <link>/2017/08/07/robust-stat-icml2017/</link>
+      <pubDate>Mon, 07 Aug 2017 00:00:00 +0000</pubDate>
+      
+      <guid>/2017/08/07/robust-stat-icml2017/</guid>
+      <description>
+        &lt;p&gt;最近ICML 2017最佳论文出炉“&lt;a href=&#34;https://arxiv.org/abs/1703.04730&#34;&gt;Understanding Black-box Predictions via Influence Functions&lt;/a&gt;”，作为学统计的同学，看到这个题目应该会有所熟悉，这莫非使用经典统计诊断来做解释？确实如此，近年数理统计和机器学习结合越发紧密，使用统计思想来理解算法模型也越来越多，想理解各类黑盒算法模型的需求也越来越强烈，比如今年Hastie有篇新论文“&lt;a href=&#34;https://web.stanford.edu/~hastie/Papers/pdp_zhao.pdf&#34;&gt;Causal Interpretations of Black-Box Models&lt;/a&gt;”也是想借助Pearl的因果图框架来处理算法模型的因果解释。经典的统计方法，比如回归、相关性、假设检验、置信区间、贝叶斯公式、bootstrap，实际上都是简洁而深刻的思维，因此我们想结合ICML最佳论文，来谈谈经典回归诊断中的相互联系，以及它们与一些大规模算法的联系。&lt;/p&gt;
+&lt;div class=&#34;section level2&#34;&gt;
+&lt;h2&gt;1. 重温经典回归诊断&lt;/h2&gt;
+&lt;p&gt;统计同学在学习回归分析时候，学习完课本上的基本公式推断以及估计性质后，一般都需要对如下几个问题做回归诊断：&lt;/p&gt;
+&lt;ol style=&#34;list-style-type: decimal&#34;&gt;
+&lt;li&gt;误差项是否满足独立性、同方差性、正态性？&lt;/li&gt;
+&lt;li&gt;是否存在异常样本？&lt;/li&gt;
+&lt;li&gt;回归是否稳定，是否某些样本点对估计影响较大？&lt;/li&gt;
+&lt;li&gt;自变量相关性如何？是否存在共线性？&lt;/li&gt;
+&lt;li&gt;线性模型是否合适？是否还需要变形？&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;通常而言，第一个问题就已经足够复杂，在计量经济学中讨论的非常多，衍生了非常多的处理办法。而对于第二第三个问题，实际上跟第一个问题联系很紧密，或者说是一脉相承，只是观察的角度不同，而在实际应用不同模型都会遇到这类问题。对于第四个问题，实际上如果不做解释而做预测，共线性问题并不是什么大不了的问题，样本量足够只是加大些计算量和影响些稳定性而已。第五个问题与第一个问题也联系很紧密，应对海量实际数据也更难处理，除了多多尝试也没用什么办法，毕竟&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;All models are wrong, but some are useful. —-George E. P. Box&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;对于常规回归分析，比如对某个人造的数据，我们通常会做如下几个诊断图：&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(car)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;这几个图分别用来回答上述其中几个问题，涉及如下几个概念：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Leverage score：也被称作self-sensitivity或self-influence，即 &lt;span class=&#34;math display&#34;&gt;\[L = \frac{\partial\hat{y_i}}{\partial y_i}\]&lt;/span&gt;，对于线性回归模型，则为&lt;span class=&#34;math inline&#34;&gt;\(H = X(X^TX)^{-1}X^T\)&lt;/span&gt;的对角元素，其残差方差为&lt;span class=&#34;math inline&#34;&gt;\(Var(\epsilon) = \sigma^2(I - H)\)&lt;/span&gt;，标准化残差&lt;span class=&#34;math inline&#34;&gt;\(r_i=\frac{\epsilon_i}{\sigma\sqrt{1 - h_{ii}}}\)&lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;Cook distance：Cook距离主要衡量单个样本点在回归分析中所产生的影响，即剔除该点后前后估计的差值的方差与整体方差的比值，越大说明该点对估计影响越大 &lt;span class=&#34;math display&#34;&gt;\[D = \frac{(\hat{\beta} - \hat{\beta}_{(i)})^TX^TX(\hat{\beta} - \hat{\beta}_{(i)})}{(p+1)\hat{\sigma}^2} = (\frac{h_{ii}}{1-h_{ii}})^2 \frac{r_i^2}{p+1}\]&lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;Influence point：即认为Leverage得分或者Cook距离较大的点为强影响点&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;影响函数可以认为是稳健统计的核心部分，在1986年Hampel等就有一本书“&lt;a href=&#34;http://as.wiley.com/WileyCDA/WileyTitle/productCd-1118150686.html&#34;&gt;Robust Statistics: The Approach Based on Influence Functions&lt;/a&gt;”，目的就是通过对影响函数的研究来修正估计量，防止某些样本对于整体模型冲击过大（无界），有对于Influence function更为一般化的定义，如果样本点均来自与F分布，假设某些点属于其他分布G时，对F分布中的参数&lt;span class=&#34;math inline&#34;&gt;\(\theta\)&lt;/span&gt;的估计T(F)造成的影响，即&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+dT_{G \rightarrow F}(F) = \lim_{t \rightarrow 0^+}\frac{T(tG + (1-t)F) - T(F)}{t}
+\]&lt;/span&gt; 如果对于单个样本点，Influence function即可定义为 &lt;span class=&#34;math display&#34;&gt;\[
+IF(x;T;F) = \lim_{t \rightarrow 0^+}\frac{T(t\Delta_x + (1-t)F) - T(F)}{t}
+\]&lt;/span&gt; 对于稳健的估计量，如果有些样本点是污染点，那么我们希望影响函数也是有界可控（即缺失该点后估计量前后变化不要太大）。对于回归分析，可以看到每个样本点的影响函数与cook距离所考量的目标是一致的。&lt;/p&gt;
+&lt;p&gt;利用影响分析在早期统计论文中有很多探讨，也比较成熟，最近一篇对于大规模回归问题的分析论文&lt;a href=&#34;https://arxiv.org/pdf/1611.05923.pdf&#34;&gt;“Influence Sketching”: Finding Influential Samples In Large-Scale Regressions&lt;/a&gt;，即扩展了Cook距离来快速从海量数据中寻找影响模型表现的强影响点。&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;influence-function&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;2. Influence function与模型稳健性&lt;/h2&gt;
+&lt;p&gt;那么ICML这篇论文怎么使用Influence function到更加一般黑盒模型中去呢？由于Influence function明确的定义，那么实际上只要套上常规的train-vaildation的训练调参框架，我们就可以推导出训练稳健性与预测稳健性的性质与联系，帮助定位实际应用模型可能表现不好的原因，可能是分布变化，或者某些强影响点导致，进而改进模型或者数据集。所以这篇文章的核心思想非常简单，就是借用了稳健统计中的方法来改善当前机器学习中闷头调参的局面。&lt;/p&gt;
+&lt;p&gt;这篇论文说有什么重要的贡献，实际上并不多，不过正如作者在related work中阐述，influence function与infinitesimal jackknife也有很多联系，后续也扩展到了permutation中，但统计关注的更多地是点估计，线性回归，估计的方差，而本文则是将经典的稳健估计中影响函数从对参数影响迁移到了“train-test”中对test集影响的机器学习套路中，并结合现在比较热门的对抗学习做了相关实验和阐述，另外，由于loss选择不同，实际的结果可能也不太一样。因此我们也可以考虑将这个东西直接扩展到业务相关evaluation function上，进一步缩小model与最终考察结果的差异。&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;leverage-scorematrix-sampling&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;3. Leverage score与Matrix sampling&lt;/h2&gt;
+&lt;p&gt;强影响点，你可以认为是异常值，也可以认为蕴藏丰富信息的点，总之会对建模有较大影响，所以这种点是去掉还是保留，从建模的角度来说，应该尽量保留完整的信息，否则谁知道真的是正态分布还是厚尾分布呢？&lt;/p&gt;
+&lt;p&gt;ICML最佳论文，与传统OLS检验关联&lt;/p&gt;
+&lt;p&gt;leverage score与matrix sampling&lt;/p&gt;
+&lt;p&gt;matrix sampling，CUR type&lt;/p&gt;
+&lt;/div&gt;
+
+        
+      </description>
+    </item>
+    
+  </channel>
+</rss>
