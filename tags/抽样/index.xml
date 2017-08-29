@@ -6,9 +6,10 @@
     <description>Recent content in 抽样 on Tao Gao | 高涛</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <copyright>高涛 版权所有 2013 - 2017</copyright>
     <lastBuildDate>Mon, 28 Aug 2017 00:00:00 +0000</lastBuildDate>
-    <atom:link href="/tags/%E6%8A%BD%E6%A0%B7/" rel="self" type="application/rss+xml" />
+    
+	<atom:link href="/tags/%E6%8A%BD%E6%A0%B7/index.xml" rel="self" type="application/rss+xml" />
+    
     
     <item>
       <title>相关、抽样、融合</title>
@@ -16,103 +17,7 @@
       <pubDate>Mon, 28 Aug 2017 00:00:00 +0000</pubDate>
       
       <guid>/2017/08/28/%E7%9B%B8%E5%85%B3%E6%8A%BD%E6%A0%B7%E8%9E%8D%E5%90%88/</guid>
-      <description>
-        
-
-&lt;p&gt;各个实用的系统工程框架，对于处理一个复杂的目标问题，多半是模块化分级联动的，这类处理方式，在思想上都可以认为有种模型融合（Ensemble）味道。比如实操中，我们多会大任务化解为小任务，难目标分解为多个较为易解的目标，最终的问题则成为了多小问题后的组合和综合。相比一上来想要用一套模型来解决，这种处理方式也更加接近实际工作方式。因为任务一旦较好的拆解，就可以分配给多个人来并行处理，相比集中式的在某个模型上解决一个难问题可能有效得多。&lt;/p&gt;
-
-&lt;p&gt;所以换个角度来看统计学，深度学习中框架性的设计我觉得是传统统计最应该学习的地方，好的框架不仅仅对于解决问题非常有帮助，并且也好理解好调试。虽然一个问题被分级分块处理，可能没法做到深度学习用一个后向传播算法来统一调整，也不如单模型简洁优美，但是实际用起来更好用，更能有效解决问题。所以在软件工程上，有系统架构师掌舵，在数据建模上，应该也有数据模型架构师掌舵，设计的框架耦合性不高，在框架的每个角落，你都可以尽情尝试和打磨各类方法，进而推动整个结果的进化。下面我们就来谈谈关于模型融合的一些有用的东西。&lt;/p&gt;
-
-&lt;h3 id=&#34;1-一个重要而实用的定理&#34;&gt;1. 一个重要而实用的定理&lt;/h3&gt;
-
-&lt;p&gt;对于模型融合（Ensemble）思想，抽样和相关性处在比较重要的理论和实践地位，并且两者紧密结合。相关性和抽样对于模型融合的影响，可以用经典的偏误差分解方法来探究，这样可以让我们更深刻的理解每块设计所带来的影响，进而在自己设计整个ensemble框架时，知道哪些是更重要值得花精力的点，哪些相对次要。&lt;/p&gt;
-
-&lt;p&gt;在&lt;a href=&#34;https://cosx.org/2015/08/some-basic-ideas-and-methods-of-model-selection&#34;&gt;关于模型选择的讨论&lt;/a&gt;中，我们知道对于平方损失，某个点的预测误差，可以分解为如下三部分&lt;/p&gt;
-
-&lt;p&gt;$$
-\begin{split}
-\text{Err}(x_0) &amp;amp; =  \mathbb{E}(L(y_0, \hat{f}(x_0))| X = x_0) \&lt;br /&gt;
-&amp;amp; =  \underbrace{\sigma^2_{\epsilon}}_{IrreducibleError} + \underbrace{(f(x_0) - \mathbb{E}\hat{f}(x_0)) ^ 2}_{ModelBias^2} + \underbrace{\mathbb{E}(\hat{f}(x_0) - \mathbb{E}\hat{f}(x_0))^2}_{ModelVariance}
-\end{split}
-$$&lt;/p&gt;
-
-&lt;p&gt;对于基于样本和特征抽样随机模型，也可推导出如上的分解式子，令*δ*表示控制模型随机性的参数（随机性可以体现在对样本的随机抽取上，也可以体现在对于特征的随机抽取上），𝒯为训练集，那么融合起来一系列随机模型的平均值$\Psi_{\mathcal{T}, \delta_{1,..m}}(\mathbf{x}) = \frac{1}{M}\sum^M_{m=1} \hat{f}_{\mathcal{T}, \delta_m}(\mathbf{x})$的期望平均损失为&lt;/p&gt;
-
-&lt;p&gt;𝔼&lt;sub&gt;𝒯&lt;/sub&gt;(Err(&lt;em&gt;Ψ&lt;/em&gt;&lt;sub&gt;𝒯, &lt;em&gt;δ&lt;/em&gt;&lt;sub&gt;1, ..&lt;em&gt;m&lt;/em&gt;&lt;/sub&gt;&lt;/sub&gt;(&lt;strong&gt;x&lt;/strong&gt;)))=noise(&lt;strong&gt;x&lt;/strong&gt;)+bias&lt;sup&gt;2&lt;/sup&gt;(&lt;strong&gt;x&lt;/strong&gt;)+variance(&lt;strong&gt;x&lt;/strong&gt;)
- 其中&lt;/p&gt;
-
-&lt;p&gt;$$
-\left\{
-\begin{array}{l}
-\text{noise}(\mathbf{x}) = \sigma^2_{\epsilon}\&lt;br /&gt;
-\text{bias}^2(\mathbf{x}) =  (f(\mathbf{x}) - u_{\mathcal{T}, \delta}(\mathbf{x}))^2, \,\,\, u_{\mathcal{L}, \delta}(\mathbf{x}) = \mathbb{E}_{\mathcal{T},\delta}(\hat{f}_{\mathcal{T}, \delta}(\mathbf{x}))\&lt;br /&gt;
-\text{variance}(\mathbf{x}) = \rho(\mathbf{x}) \sigma^2_{\mathcal{T}, \delta}(\mathbf{x}) + \frac{1 - \rho(\mathbf{x})}{M} \sigma^2_{\mathcal{T}, \delta}(\mathbf{x}), \,\,\, \sigma^2_{\mathcal{T}, \delta}(\mathbf{x})=\mathbb{Var}_{\mathcal{T},\delta}(\hat{f}_{\mathcal{T},\delta}(\mathbf{x}))
-\end{array}
-\right.
-$$&lt;/p&gt;
-
-&lt;p&gt;而&lt;em&gt;ρ&lt;/em&gt;(&lt;strong&gt;x&lt;/strong&gt;)则是来源同一样本集的两个不同随机模型的预测值的皮尔逊相关系数。从上述这个式子，有如下几个结论：&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;偏倚（bias）：集成模型与单个随机模型是一样的；&lt;/li&gt;
-&lt;li&gt;方差（variance）：随着随机模型个数增加，variance(&lt;strong&gt;x&lt;/strong&gt;)→&lt;em&gt;ρ&lt;/em&gt;(&lt;strong&gt;x&lt;/strong&gt;)&lt;em&gt;σ&lt;/em&gt;&lt;sub&gt;ℒ, &lt;em&gt;δ&lt;/em&gt;&lt;/sub&gt;&lt;sup&gt;2&lt;/sup&gt;(&lt;strong&gt;x&lt;/strong&gt;),
-
-&lt;ul&gt;
-&lt;li&gt;当随机模型间的相关性非常高时，即随机效应比较弱时，则集成模型的方差和单个随机模型的方差接近，&lt;/li&gt;
-&lt;li&gt;当随机模型件的相关性非常弱时，即随机效应比较强时，则集成模型的方差则趋近于0，&lt;/li&gt;
-&lt;/ul&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;从上面我们可以看到做模型融合时，&lt;strong&gt;模型的相关性对于降低预测损失非常重要&lt;/strong&gt;，在较好的控制随机模型带来的偏误情况下，降低随机模型的相关性可以大幅提升模型预测准确性。那么这种模型相关性是什么带来的呢？Geurts
-(2002) 有这样一个关于模型融合的方差结论&lt;/p&gt;
-
-&lt;p&gt;$$
-\text{variance}(\mathbf{x})  = \mathbb{Var}_{\mathcal{T}}(\mathbb{E}_{\delta|\mathcal{T}}(f_{\mathcal{T},\delta}(\mathbf{x}))) + \frac{1}{M}\mathbb{E}_{\mathcal{T}}(\mathbb{Var}_{\delta|\mathbb{T}}(f_{\mathcal{T}, \delta}(\mathbf{x})))
-$$
- 与上述分解结合下，即可得到如下式子&lt;/p&gt;
-
-&lt;p&gt;$$
-\rho(\mathbf{x}) = \frac{\mathbb{Var}_{\mathcal{T}}(\mathbb{E}_{\delta | \mathcal{T}}(f_{\mathcal{T},\delta}(\mathbf{x})))}{\mathbb{Var}_{\mathcal{T}}(\mathbb{E}_{\delta|\mathcal{T}}(f_{\mathcal{T},\delta}(\mathbf{x}))) + \mathbb{E}_{\mathcal{T}}(\mathbb{Var}_{\delta|\mathbb{T}}(f_{\mathcal{T}, \delta}(\mathbf{x})))}
-$$&lt;/p&gt;
-
-&lt;p&gt;从该式可以看到，随机模型间的相关系数实际上是由于训练集𝒯所引起的方差与总方差间的比值。如果构件模型的方差主要来源于整体训练集时，那么随机模型就会长得挺像，相关性比较高，这种情况通常是训练样本量非常充足，涵盖的信息量很全，或者是训练样本冗余度很高，两两间相关性很高，随机性起的作用很小；而如果构建模型的方差主要来源于随机机制而非训练集自身的信息时，则模型间的相关性很低，这种情况，原因可能有很多，比如训练集样本量不大、模型族的稳定性不高，随机机制使得模型构建差异较大等等。总而言之，样本量、样本间的相关性、特征间的相关性、随机机制是随机模型相关性的根源。&lt;/p&gt;
-
-&lt;p&gt;将上述结论总结道一个更为有用的实际经验便是（来源于Louppe（2015）研究随机森林）：&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;数据量较大时候，对每个估计量使用所有数据通常提升有限，而合适大小的随机样本并不会引起精度的显著下降，因为很多都是冗余样本；而此时子抽样带来的好处是训练时长和内存消耗会显著减少，可规模化能力更强；&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;数据较为充分时对于特征的抽样对于提高精度更为关键，样本的抽样通常效果并不明显&lt;/strong&gt;。&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;这个也很符合直觉和实际情况，如果数据量比较充足，你换换样本，很可能多次换到的样本子集比较相似，对于最终模型预测结果大家则都会比较像）；但是如果特征间相关性比较低，你换换特征，那么模型预测的结果可能就是千差万别了。&lt;/p&gt;
-
-&lt;p&gt;当然还有其他更为极端的方式，可以让模型在估计时候都无需样本集来帮助估计，直接全部随机掉，比如&lt;a href=&#34;http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.65.7485&amp;amp;rep=rep1&amp;amp;type=pdf&#34;&gt;Extremely
-Randomized
-Trees(ExtraTrees)&lt;/a&gt;让树的节点划分也无需通过纯度或者精度等标准来优化，直接在特征的最小值和最大值之间随机取个数即可。这种处理方式，使得模型估计脱离了训练样本，那么预测方差就完全来源于随机机制，随机模型间的相关性自然就低了。&lt;/p&gt;
-
-&lt;p&gt;总而言之，误差分解表明，对于模型融合，我们要选择相对比较低偏误的基础模型，然后根据对样本、特征的理解，设计抽样机制得到随机模型，通过模型融合来降低预测方差，进而整体降低平均预测误差。随机森林的框架就是一个很好的模板，如果要结合深度学习这种级联框架，那么则需要大量实践才能够逐步对各个模型特性以及抽样机制有比较好的理解和控制。&lt;/p&gt;
-
-&lt;p&gt;当然上述说的很细节，用更宽泛大家都可能记得住的语言来说，模型融合一般会比较有效的三个直观性原因（Dietterich，2000b）：&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;统计性：Box说过“所有模型都是错的，但是有些是有用的”，多个不相关模型的预测，会降低模型假设错误的风险；&lt;/li&gt;
-&lt;li&gt;计算性：模型不少为了好解，都做了些假设简化处理，这种简化虽说可能是全局最优，但实际得到的仍可能是局部最优，而多个模型融合，好比提供了多个不同起始点来求解，相对于单模型对于未知的真模型可能是更好的逼近；&lt;/li&gt;
-&lt;li&gt;表示性：对于有限集，真模型几乎不可能被任何一个候选模型恰好表示，而模型融合，
-拓展了表示函数的空间，可能更好的表示真模型。&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h3 id=&#34;2-对实际业务操作的启发&#34;&gt;2. 对实际业务操作的启发&lt;/h3&gt;
-
-&lt;p&gt;在实际预测业务中，我们通常会发现业务经验往往比模型重要得多，比如很多时候会根据业务经验对样本或者变量进行某些分组，分别训练后再融合，经过这些这样处理后的效果通常会比没有业务经验的人直接套模型会好得多，造成的这种结果的原因是什么呢？&lt;/p&gt;
-
-&lt;p&gt;经过上述对模型融合的讨论，可认为是抽样带来的功劳。有人可能会感到疑惑，这怎么算到抽样头上去了呢？实际上抽样的发生也是按照概率来抽，如果没有任何先验知识，等概率随机抽样通常来说是更好的方式，如果有某些先验知识，那么非等概率的重要性抽样相比等概率抽样会更有效率，模型效果也会有显著提升。那么，如何获得这种重要性呢？这就是比较艺术或者比较tricky的地方，没有业务背景的建模同学，可以根据业务需求做各种样本和特征的相关性分析，而有业务背景不会建模的同学，他们对于信息重要程度和相关性的直觉和经验之上（脑补建模），所以有经验的从业人员的业务经验对实际建模其实都比较宝贵，可以帮助规避很多弯路。借助各种形式的抽样，每一步我们都可能获取更加稳定的预测。&lt;/p&gt;
-
-&lt;p&gt;实际业务的框架构建非常不容易，从数据获取、处理，到一级级的子问题分解和提取，都不是一个容易的过程，要想得到比较好的结果，不妨多从随机森林的角度去设计业务框架，这样是很符合“人人都有活干，人人都有贡献，人人都在推动集体的前进”的社会主义价值观的：）&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&#34;https://timgsa.baidu.com/timg?image&amp;amp;quality=80&amp;amp;size=b10000_10000&amp;amp;sec=1504017575&amp;amp;di=f4542baacf09f2a888a9b666f2101c68&amp;amp;src=http://pic1.997788.com/mini/shopstation/pic/MP/00/0000/000046/MP00004677.jpg&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
-
-        
-      </description>
+      <description>各个实用的系统工程框架，对于处理一个复杂的目标问题，多半是模块化分级联动的，这类处理方式，在思想上都可以认为有种模型融合（Ensemble）</description>
     </item>
     
   </channel>

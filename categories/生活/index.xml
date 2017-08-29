@@ -6,9 +6,10 @@
     <description>Recent content in 生活 on Tao Gao | 高涛</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <copyright>高涛 版权所有 2013 - 2017</copyright>
     <lastBuildDate>Sun, 11 Jun 2017 00:00:00 +0000</lastBuildDate>
-    <atom:link href="/categories/%E7%94%9F%E6%B4%BB/" rel="self" type="application/rss+xml" />
+    
+	<atom:link href="/categories/%E7%94%9F%E6%B4%BB/index.xml" rel="self" type="application/rss+xml" />
+    
     
     <item>
       <title>博客除草</title>
@@ -16,15 +17,7 @@
       <pubDate>Sun, 11 Jun 2017 00:00:00 +0000</pubDate>
       
       <guid>/2017/06/11/blog-start/</guid>
-      <description>
-        &lt;p&gt;话说三年后又突然给想起博客除草，还是因为这两天不小心溜进了谢老大博客找乐子时，想起他很久就推过的blogdown包，看着如此简单，于是乎啥也不改的就准备给博客除除草了。&lt;/p&gt;
-
-&lt;p&gt;这个年代写博客的人似乎越来越少，这也是没有办法的事情，在微信攻城略地即将占领大部分人的12小时的时候，在微信中写写公众号似乎才是正当的渠道。一个个独立博客站点，由于缺乏一定的社交机制，仅靠着几个“朋友链接”，难以形成快速而有效的传播机制和订阅机制，所以在目前移动互联网时代，独立博客有点像一个个孤魂野鬼的飘荡在互联网世界中，让人看见的少，毕竟是web 2.0时代的产物，依靠门户聚合的时代已经一去不复返了。几年前在COS编辑部时还曾畅想过把COS主站做成一个统计资源平台，其中一个想法就是聚合各类优秀统计和计算机类的博客，现在想想，时代变化的真快。&lt;/p&gt;
-
-&lt;p&gt;不过又想想，写博客毕竟还是件私人的事情，传不传播分不分享也没见得多重要，在互联网世界里找个服务器先存着只言片语，自己查阅起来和让人“人肉”起来也方便。而现在之所以有准备开始继续写博客的冲动，一个原因还是看谢大一溜烟的文章，读起来鲜活灵动，一直往前挖，还真的可以看到一个人的变化轨迹；另外一个原因是翻翻自己&lt;a href=&#34;www.gaotao.name/cn&#34;&gt;老博客&lt;/a&gt;（感谢&lt;a href=&#34;https://nanx.me/&#34;&gt;小南同学&lt;/a&gt;一直为我已经死去的域名续命），发现本科时代自己还是有很多奇怪有意思的想法，比现在的自己灵泛多了，思前想后，还是有些惭愧，似乎在成长和成熟，咋看咋觉得是越来越麻木，丧失了思想上的某些嗅觉和触觉。于是乎操起blogdown包，先给博客除除草。这写博客和搞锻炼很像，没有开始走走，就估计永远也不想开始了。一转眼来上海也快三个月了，总得有个好习惯需要培养下，锻炼还没开始，那就先从博客做起好了。&lt;/p&gt;
-
-        
-      </description>
+      <description>话说三年后又突然给想起博客除草，还是因为这两天不小心溜进了谢老大博客找乐子时，想起他很久就推过的blogdown包，看着如此简单，于是乎啥也</description>
     </item>
     
   </channel>

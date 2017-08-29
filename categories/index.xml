@@ -6,8 +6,9 @@
     <description>Recent content in Categories on Tao Gao | 高涛</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <copyright>高涛 版权所有 2013 - 2017</copyright>
-    <atom:link href="/categories/" rel="self" type="application/rss+xml" />
+    
+	<atom:link href="/categories/index.xml" rel="self" type="application/rss+xml" />
+    
     
     <item>
       <title>学习</title>
@@ -15,10 +16,7 @@
       <pubDate>Mon, 28 Aug 2017 00:00:00 +0000</pubDate>
       
       <guid>/categories/%E5%AD%A6%E4%B9%A0/</guid>
-      <description>
-        
-        
-      </description>
+      <description></description>
     </item>
     
     <item>
@@ -27,10 +25,7 @@
       <pubDate>Sun, 11 Jun 2017 00:00:00 +0000</pubDate>
       
       <guid>/categories/%E7%94%9F%E6%B4%BB/</guid>
-      <description>
-        
-        
-      </description>
+      <description></description>
     </item>
     
   </channel>
